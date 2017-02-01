@@ -35,7 +35,7 @@ def gaussian_noise(x, sigmas):
 
 class ParticleFilter(object):
     def __init__(self, priors,  inverse_fn, n_particles=200, dynamics_fn=None, noise_fn=None, 
-                weight_fn=None, resample_proportion=0.05):
+                weight_fn=None, resample_proportion=0.05, column_names=None):
         """
         
         Parameters:
@@ -54,6 +54,7 @@ class ParticleFilter(object):
                   with higher values meaning more similar
         
         """
+        self.column_names = column_names
         self.priors = priors
         self.d = len(self.priors)
         self.n_particles = n_particles
@@ -98,51 +99,52 @@ class ParticleFilter(object):
         
         # mean hypothesis
         self.mean_hypothesis = np.sum(self.hypotheses.T * self.weights, axis=-1).T
+        self.mean_state = np.sum(self.particles.T * self.weights, axis=-1).T
         
         # randomly resample some particles from the prior
         random_mask = np.random.random(size=(self.n_particles,))<self.resample_proportion
         self.resampled_particles = random_mask
         self.init_filter(mask=random_mask)
         
-from scipy.stats import norm, gamma, uniform 
-priors = [uniform(loc=0, scale=32), uniform(loc=0, scale=32), gamma(a=2,loc=0,scale=10)]
+# from scipy.stats import norm, gamma, uniform 
+# priors = [uniform(loc=0, scale=32), uniform(loc=0, scale=32), gamma(a=2,loc=0,scale=10)]
 
 # testing only
-import skimage.draw
-import cv2
-def blob(x):
-    y = np.zeros((x.shape[0], 32, 32))
-    for i,particle in enumerate(x):
-        rr,cc = skimage.draw.circle(particle[0], particle[1], particle[2], shape=(32,32))
-        y[i,rr,cc] = 1
-    return y
+# import skimage.draw
+# import cv2
+# def blob(x):
+    # y = np.zeros((x.shape[0], 32, 32))
+    # for i,particle in enumerate(x):
+        # rr,cc = skimage.draw.circle(particle[0], particle[1], particle[2], shape=(32,32))
+        # y[i,rr,cc] = 1
+    # return y
         
 
-def test_filter():
-    pf = ParticleFilter(priors=priors, 
-                    inverse_fn=blob,
-                    n_particles=200,
-                    noise_fn=lambda x: gaussian_noise(x, sigmas=[0.3, 0.3, 0.1]),
-                    weight_fn=lambda x,y:squared_error(x, y,sigma=2),
-                    resample_proportion=0.1)
+# def test_filter():
+    # pf = ParticleFilter(priors=priors, 
+                    # inverse_fn=blob,
+                    # n_particles=200,
+                    # noise_fn=lambda x: gaussian_noise(x, sigmas=[0.3, 0.3, 0.1]),
+                    # weight_fn=lambda x,y:squared_error(x, y,sigma=2),
+                    # resample_proportion=0.1)
                     
-    x,y,s = 12,18,np.random.uniform(3,6)
-    dx = np.random.uniform(-0.1,0.1)
-    dy = np.random.uniform(-0.1,0.1)    
-    cv2.namedWindow('img',cv2.WINDOW_NORMAL)
-    cv2.namedWindow('samples',cv2.WINDOW_NORMAL)
-    cv2.resizeWindow('img', 320,320)
-    cv2.resizeWindow('samples', 320,320)
-    for i in range(1000):        
-        img = blob(np.array([[x,y,s]]))
-        pf.update(img)
-        cv2.imshow("img", np.squeeze(img))
+    # x,y,s = 12,18,np.random.uniform(3,6)
+    # dx = np.random.uniform(-0.1,0.1)
+    # dy = np.random.uniform(-0.1,0.1)    
+    # cv2.namedWindow('img',cv2.WINDOW_NORMAL)
+    # cv2.namedWindow('samples',cv2.WINDOW_NORMAL)
+    # cv2.resizeWindow('img', 320,320)
+    # cv2.resizeWindow('samples', 320,320)
+    # for i in range(1000):        
+        # img = blob(np.array([[x,y,s]]))
+        # pf.update(img)
+        # cv2.imshow("img", np.squeeze(img))
         
         
-        cv2.imshow("samples", pf.mean_hypothesis)
-        cv2.waitKey(20)
-        x+=dx
-        y+=dy
-        print np.mean(pf.particles, axis=0)
-    cv2.destroyAllWindows()
-test_filter()
+        # cv2.imshow("samples", pf.mean_hypothesis)
+        # cv2.waitKey(20)
+        # x+=dx
+        # y+=dy
+        # print np.mean(pf.particles, axis=0)
+    # cv2.destroyAllWindows()
+# test_filter()

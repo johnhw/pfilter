@@ -30,6 +30,14 @@ def squared_error(x,y,sigma=1):
     return np.exp(-d / (2.0*sigma**2))
     
 def gaussian_noise(x, sigmas):    
+    """Apply normally-distributed noise to the N,D array x.
+    Parameters:
+    -----------
+        x : array
+            (N,D) array of values
+        sigmas : array
+            D-element vector of std. dev. for each column of x
+    """
     n = np.random.normal(np.zeros(len(sigmas)), sigmas, size=(x.shape[0], len(sigmas)))
     return x+n
 
@@ -122,7 +130,7 @@ class ParticleFilter(object):
             for i,prior in enumerate(self.priors):
                 self.particles[mask,i] = prior.rvs(self.n_particles)[mask]
     
-    def update(self, observed):
+    def update(self, observed=None):
         """Update the state of the particle filter given an observation.
         
         Parameters:
@@ -130,22 +138,23 @@ class ParticleFilter(object):
         
         observed: array
             The observed output, in the same format as inverse_fn() will produce. This is typically the
-            input from the sensor observing the process (e.g. a camera image in optical tracking)
+            input from the sensor observing the process (e.g. a camera image in optical tracking).
+            If None, then the observation step is skipped, and the filter will run one step in prediction-only mode.
         """
             
         # apply dynamics and noise
         self.particles = self.dynamics_fn(self.particles)
         self.particles = self.noise_fn(self.particles)
-        
         # invert to hypothesise observations
-        hypotheses = self.inverse_fn(self.particles)
-        self.hypotheses = hypotheses
+        self.hypotheses = self.inverse_fn(self.particles)             
         
-        # compute similarity to observations
-        weights = self.weight_fn(hypotheses, observed)
-                
-        # force to be positive and normalise to "probabilities"
-        weights = np.clip(weights, 0, np.inf)                
+        if observed is not None:
+            # compute similarity to observations
+            # force to be positive 
+            weights = np.clip(self.weight_fn(self.hypotheses, observed), 0, np.inf)                   
+        else:
+            # we have no observation, so all particles weighted the same
+            weights = np.ones((self.n_particles,))
         
         # apply weighting based on the internal state
         if self.internal_weight_fn is not None:
@@ -154,6 +163,7 @@ class ParticleFilter(object):
             internal_weights = internal_weights / np.sum(internal_weights)
             weights *= internal_weights
             
+        # normalise probabilities to "probabilities"
         self.weights = weights / np.sum(weights)
                       
         # resampling step

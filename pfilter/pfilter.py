@@ -90,9 +90,10 @@ class ParticleFilter(object):
                     a an array of N hypothesised sensor outputs (e.g. array of dimension (N,W,H)) and the observed output (e.g. array of dimension (W,H)) and 
                     returns a strictly positive weight for the each hypothesis as an N-element vector. 
                     This should be a *similarity* measure, with higher values meaning more similar, for example from an RBF kernel.
-        internal_weight_fn :  function(states) => weights
+        internal_weight_fn :  function(states, observed) => weights
                     Reweights the particles based on their *internal* state. This is function which takes
-                    an (N,D) array of internal states and returns a strictly positive weight for the each state as an N-element vector. 
+                    an (N,D) array of internal states and the observation and 
+                    returns a strictly positive weight for the each state as an N-element vector. 
                     Typically used to force particles inside of bounds, etc.                                        
         resample_proportion : float
                     proportion of samples to draw from the prior on each iteration.
@@ -158,7 +159,7 @@ class ParticleFilter(object):
         
         # apply weighting based on the internal state
         if self.internal_weight_fn is not None:
-            internal_weights = self.internal_weight_fn(self.particles)            
+            internal_weights = self.internal_weight_fn(self.particles, observed)            
             internal_weights = np.clip(internal_weights, 0, np.inf)        
             internal_weights = internal_weights / np.sum(internal_weights)
             weights *= internal_weights

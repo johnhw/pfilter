@@ -34,29 +34,62 @@ def gaussian_noise(x, sigmas):
     return x+n
 
 class ParticleFilter(object):
+    """A particle filter object which maintains the internal state of a population of particles, and can
+    be updated given observations.
+    
+    Attributes:
+    -----------
+    
+    n_particles : int
+        number of particles used (N)
+    d : int
+        dimension of the internal state
+    resample_proportion : float
+        fraction of particles resampled from prior at each step
+    particles : array
+        (N,D) array of particle states
+    mean_hypothesis : array 
+        The current mean hypothesized observation
+    mean_state : array
+        The current mean hypothesized internal state D
+    hypotheses : array
+        The (N,...) array of hypotheses for each particle
+    weights : array
+        N-element vector of normalized weights for each particle.
+    """
+    
     def __init__(self, priors,  inverse_fn, n_particles=200, dynamics_fn=None, noise_fn=None, 
                 weight_fn=None,  resample_proportion=0.05, column_names=None, internal_weight_fn=None):
         """
         
         Parameters:
-        ---
+        -----------
         
-        priors: sequence of prior distributions; should be a frozen distribution from scipy.stats; 
+        priors : list
+                sequence of prior distributions; should be a frozen distribution from scipy.stats; 
                 e.g. scipy.stats.norm(loc=0,scale=1) for unit normal
-        inverse_fn: transformation function from the internal state to the sensor state. Takes an (N,D) array of states 
-                    and returns the expected sensor output as an array (e.g. a tensor).
-        n_particles: number of particles in the filter
-        dynamics_fn: dynamics function, which takes a state vector and returns a new one with the dynamics applied.
-        noise_fn: noise function, takes a state vector and returns a new one with noise added.
-        weight_fn: computes the distance from the real sensed variable and that returned by inverse_fn. Takes
-                  a an array of N sensor outputs and the observed output (x,y) and 
-                  returns a strictly positive weight for the output. This should be a *similarity* measure, 
-                  with higher values meaning more similar        
-        internal_weight_fn: reweights the particles based on their *internal* state. This is function which takes
-                         an array of internal states and returns weights for each. Typically used to force
-                         particles inside of bounds.
-        resample_proportion: proportion of samples to draw from the prior on each iteration
-        column_names: names of each the columns of the state vector
+        inverse_fn : function(states) => observations
+                    transformation function from the internal state to the sensor state. Takes an (N,D) array of states 
+                    and returns the expected sensor output as an array (e.g. a (N,W,H) tensor if generating W,H dimension images).
+        n_particles : int 
+                     number of particles in the filter
+        dynamics_fn : function(states) => states
+                      dynamics function, which takes an (N,D) state array and returns a new one with the dynamics applied.
+        noise_fn : function(states) => states
+                    noise function, takes a state vector and returns a new one with noise added.
+        weight_fn :  function(real, hypothesized) => weights
+                    computes the distance from the real sensed variable and that returned by inverse_fn. Takes
+                    a an array of N hypothesised sensor outputs (e.g. array of dimension (N,W,H)) and the observed output (e.g. array of dimension (W,H)) and 
+                    returns a strictly positive weight for the each hypothesis as an N-element vector. 
+                    This should be a *similarity* measure, with higher values meaning more similar, for example from an RBF kernel.
+        internal_weight_fn :  function(states) => weights
+                    Reweights the particles based on their *internal* state. This is function which takes
+                    an (N,D) array of internal states and returns a strictly positive weight for the each state as an N-element vector. 
+                    Typically used to force particles inside of bounds, etc.                                        
+        resample_proportion : float
+                    proportion of samples to draw from the prior on each iteration.
+        column_names : list of strings
+                    names of each the columns of the state vector
         
         """
         self.column_names = column_names
@@ -72,6 +105,15 @@ class ParticleFilter(object):
         self.internal_weight_fn = internal_weight_fn
         
     def init_filter(self, mask=None):
+        """Initialise the filter by drawing samples from the prior.
+        
+        Parameters:
+        -----------
+        mask : array, optional
+            boolean mask specifying the elements of the particle array to draw from the prior. None (default)
+            implies all particles will be resampled (i.e. a complete reset)
+        """
+        
         # resample from the prior
         if mask is None:
             for i,prior in enumerate(self.priors):
@@ -81,6 +123,16 @@ class ParticleFilter(object):
                 self.particles[mask,i] = prior.rvs(self.n_particles)[mask]
     
     def update(self, observed):
+        """Update the state of the particle filter given an observation.
+        
+        Parameters:
+        ----------
+        
+        observed: array
+            The observed output, in the same format as inverse_fn() will produce. This is typically the
+            input from the sensor observing the process (e.g. a camera image in optical tracking)
+        """
+            
         # apply dynamics and noise
         self.particles = self.dynamics_fn(self.particles)
         self.particles = self.noise_fn(self.particles)

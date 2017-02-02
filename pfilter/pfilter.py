@@ -112,6 +112,7 @@ class ParticleFilter(object):
         self.resample_proportion = resample_proportion
         self.particles = np.zeros((self.n_particles, self.d))
         self.internal_weight_fn = internal_weight_fn
+        self.init_filter()
         
     def init_filter(self, mask=None):
         """Initialise the filter by drawing samples from the prior.

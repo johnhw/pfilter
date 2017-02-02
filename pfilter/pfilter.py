@@ -35,7 +35,7 @@ def gaussian_noise(x, sigmas):
 
 class ParticleFilter(object):
     def __init__(self, priors,  inverse_fn, n_particles=200, dynamics_fn=None, noise_fn=None, 
-                weight_fn=None, resample_proportion=0.05, column_names=None):
+                weight_fn=None,  resample_proportion=0.05, column_names=None, internal_weight_fn=None):
         """
         
         Parameters:
@@ -51,7 +51,10 @@ class ParticleFilter(object):
         weight_fn: computes the distance from the real sensed variable and that returned by inverse_fn. Takes
                   a an array of N sensor outputs and the observed output (x,y) and 
                   returns a strictly positive weight for the output. This should be a *similarity* measure, 
-                  with higher values meaning more similar
+                  with higher values meaning more similar        
+        internal_weight_fn: reweights the particles based on their *internal* state. This is function which takes
+                         an array of internal states and returns weights for each. Typically used to force
+                         particles inside of bounds.
         resample_proportion: proportion of samples to draw from the prior on each iteration
         column_names: names of each the columns of the state vector
         
@@ -66,6 +69,7 @@ class ParticleFilter(object):
         self.weight_fn = weight_fn or squared_error
         self.resample_proportion = resample_proportion
         self.particles = np.zeros((self.n_particles, self.d))
+        self.internal_weight_fn = internal_weight_fn
         
     def init_filter(self, mask=None):
         # resample from the prior
@@ -89,7 +93,15 @@ class ParticleFilter(object):
         weights = self.weight_fn(hypotheses, observed)
                 
         # force to be positive and normalise to "probabilities"
-        weights = np.clip(weights, 0, np.inf)        
+        weights = np.clip(weights, 0, np.inf)                
+        
+        # apply weighting based on the internal state
+        if self.internal_weight_fn is not None:
+            internal_weights = self.internal_weight_fn(self.particles)            
+            internal_weights = np.clip(internal_weights, 0, np.inf)        
+            internal_weights = internal_weights / np.sum(internal_weights)
+            weights *= internal_weights
+            
         self.weights = weights / np.sum(weights)
                       
         # resampling step

@@ -66,17 +66,17 @@ class ParticleFilter(object):
         N-element vector of normalized weights for each particle.
     """
     
-    def __init__(self, priors,  inverse_fn, n_particles=200, dynamics_fn=None, noise_fn=None, 
+    def __init__(self, initial,  observe_fn, n_particles=200, dynamics_fn=None, noise_fn=None, 
                 weight_fn=None,  resample_proportion=0.05, column_names=None, internal_weight_fn=None):
         """
         
         Parameters:
         -----------
         
-        priors : list
+        initial : list
                 sequence of prior distributions; should be a frozen distribution from scipy.stats; 
                 e.g. scipy.stats.norm(loc=0,scale=1) for unit normal
-        inverse_fn : function(states) => observations
+        observe_fn : function(states) => observations
                     transformation function from the internal state to the sensor state. Takes an (N,D) array of states 
                     and returns the expected sensor output as an array (e.g. a (N,W,H) tensor if generating W,H dimension images).
         n_particles : int 
@@ -86,7 +86,7 @@ class ParticleFilter(object):
         noise_fn : function(states) => states
                     noise function, takes a state vector and returns a new one with noise added.
         weight_fn :  function(real, hypothesized) => weights
-                    computes the distance from the real sensed variable and that returned by inverse_fn. Takes
+                    computes the distance from the real sensed variable and that returned by observe_fn. Takes
                     a an array of N hypothesised sensor outputs (e.g. array of dimension (N,W,H)) and the observed output (e.g. array of dimension (W,H)) and 
                     returns a strictly positive weight for the each hypothesis as an N-element vector. 
                     This should be a *similarity* measure, with higher values meaning more similar, for example from an RBF kernel.
@@ -96,16 +96,16 @@ class ParticleFilter(object):
                     returns a strictly positive weight for the each state as an N-element vector. 
                     Typically used to force particles inside of bounds, etc.                                        
         resample_proportion : float
-                    proportion of samples to draw from the prior on each iteration.
+                    proportion of samples to draw from the initial on each iteration.
         column_names : list of strings
                     names of each the columns of the state vector
         
         """
         self.column_names = column_names
-        self.priors = priors
-        self.d = len(self.priors)
+        self.initial = initial
+        self.d = len(self.initial)
         self.n_particles = n_particles
-        self.inverse_fn = inverse_fn
+        self.observe_fn = observe_fn
         self.dynamics_fn = dynamics_fn or no_dynamics
         self.noise_fn = noise_fn or no_noise
         self.weight_fn = weight_fn or squared_error
@@ -126,10 +126,10 @@ class ParticleFilter(object):
         
         # resample from the prior
         if mask is None:
-            for i,prior in enumerate(self.priors):
+            for i,prior in enumerate(self.initial):
                 self.particles[:,i] = prior.rvs(self.n_particles)
         else:
-            for i,prior in enumerate(self.priors):
+            for i,prior in enumerate(self.initial):
                 self.particles[mask,i] = prior.rvs(self.n_particles)[mask]
     
     def update(self, observed=None):
@@ -139,7 +139,7 @@ class ParticleFilter(object):
         ----------
         
         observed: array
-            The observed output, in the same format as inverse_fn() will produce. This is typically the
+            The observed output, in the same format as observe_fn() will produce. This is typically the
             input from the sensor observing the process (e.g. a camera image in optical tracking).
             If None, then the observation step is skipped, and the filter will run one step in prediction-only mode.
         """
@@ -148,7 +148,7 @@ class ParticleFilter(object):
         self.particles = self.dynamics_fn(self.particles)
         self.particles = self.noise_fn(self.particles)
         # invert to hypothesise observations
-        self.hypotheses = self.inverse_fn(self.particles)             
+        self.hypotheses = self.observe_fn(self.particles)             
         
         if observed is not None:
             # compute similarity to observations

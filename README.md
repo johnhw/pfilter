@@ -5,8 +5,8 @@ Basic Python particle filter. Depends on [NumPy](http://numpy.org) only.
 Create a `ParticleFilter` object, then call `update(observation)` with an observation array to update the state of the particle filter.
 
 You need to specify at the minimum:
-* an **inverse function** `inverse_fn(state)=>observation` which will return a predicted observation for an internal state.
-* a set of **prior distributions** `priors` which is a list of the prior distributions for all of the internal state variables. These are usually distributions from `scipy.stats`, but any object that has a compatible `rvs()` call to generate random variates will also work [technically, these are the functions that will sample from initial proposal densities, not the priors]
+* an **observation function** `observe_fn(state)=>observation` which will return a predicted observation for an internal state.
+* a set of **initial distributions** `initial` which is a list of the initial  distributions for all of the internal state variables. These are usually distributions from `scipy.stats`, but any object that has a compatible `rvs()` call to generate random variates will also work 
 * a **weight function** `weight_fn(real_observed, hyp_observed_array)=>weights` which specifies how well each of the hyp_observed arrays match the real observation `real_observed`. This must produce a strictly positive weight value, where larger means more similar.
 
 Typically, you would also specify a `dynamics_fn` to update the state based on internal (prediction) dynamics, and a `noise_fn` to add diffusion into the sampling process.
@@ -33,8 +33,8 @@ For example, assuming there is a function `blob` which draws a blob on an image 
     
     # create the filter
     pf = pfilter.ParticleFilter(
-                    priors=priors, 
-                    inverse_fn=blob,
+                    initial=priors, 
+                    observe_fn=blob,
                     n_particles=200,
                     dynamics_fn=velocity,
                     noise_fn=lambda x: 

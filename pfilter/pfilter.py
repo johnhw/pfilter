@@ -153,7 +153,7 @@ class ParticleFilter(object):
         if observed is not None:
             # compute similarity to observations
             # force to be positive 
-            weights = np.clip(self.weight_fn(self.hypotheses, observed), 0, np.inf)                   
+            weights = np.clip(np.array(self.weight_fn(self.hypotheses, observed)), 0, np.inf)                   
         else:
             # we have no observation, so all particles weighted the same
             weights = np.ones((self.n_particles,))

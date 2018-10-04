@@ -25,7 +25,7 @@ For example, assuming there is a function `blob` which draws a blob on an image 
                 norm(loc=0, scale=0.5),
                 norm(loc=0, scale=0.5)]
                                 
-    # very simple linear dynamcics: x += dx
+    # very simple linear dynamics: x += dx
     def velocity(x):
         xp = np.array(x)
         xp[0:2] += xp[3:5]        

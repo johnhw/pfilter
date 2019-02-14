@@ -1,6 +1,16 @@
 # pfilter
 Basic Python particle filter. Depends on [NumPy](http://numpy.org) only. 
 
+## Installation
+
+Available via PyPI:
+
+    pip install pfilter
+    
+Or install the git version:
+
+    pip install git+https://github.com/johnhw/pfilter.git
+
 ## Usage
 Create a `ParticleFilter` object, then call `update(observation)` with an observation array to update the state of the particle filter.
 

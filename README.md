@@ -1,5 +1,5 @@
 # pfilter
-Basic Python particle filter. Written to be simple and clear; not necessarily most efficient or most flexible implementation. Depends on [NumPy](http://numpy.org) only. 
+Basic Python particle filter. Plain SIR filtering, with systematic resampling. Written to be simple and clear; not necessarily most efficient or most flexible implementation. Depends on [NumPy](http://numpy.org) only. 
 
 ## Installation
 
@@ -20,8 +20,8 @@ You need to specify at the minimum:
 * a **weight function** `weight_fn(real_observed, hyp_observed_array) => weight vector` which specifies how well each of the `hyp_observed` arrays match the real observation `real_observed`. This must produce a strictly positive weight value, where larger means more similar.
 
 Typically, you would also specify:
-*  a `dynamics_fn` to update the state based on internal (prediction) dynamics, and a 
-* `noise_fn` to add diffusion into the sampling process. 
+*  a `dynamics_fn(state) => predicted_state` to update the state based on internal (prediction) dynamics, and a 
+* `noise_fn(predicted_state) => noisy_state` to add diffusion into the sampling process. 
 
 For example, assuming there is a function `blob` which draws a blob on an image of some size (the same size as the observation):
 

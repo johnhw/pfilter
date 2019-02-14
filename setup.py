@@ -8,6 +8,6 @@ setup(
      author = 'John H Williamson',
      author_email = 'johnhw@gmail.com',
      url = 'https://github.com/johnhw/pfilter', # use the URL to the github repo
-    download_url = 'https://github.com/johnhw/pfilter/tarball/0.1',
+    download_url = 'https://github.com/johnhw/pfilter/tarball/0.2',
     keywords=["particle", "probabilistic", "stochastic", "filter", "filtering"]
  )

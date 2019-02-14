@@ -32,7 +32,7 @@ For example, assuming there is a function `blob` which draws a blob on an image 
         
         # prior sampling function for each variable
         # (assumes x and y are coordinates in the range 0-32)    
-        prior_fn = independent_sample([  uniform(loc=0, scale=32).rvs, 
+        prior_fn = independent_sample([uniform(loc=0, scale=32).rvs, 
                     uniform(loc=0, scale=32).rvs, 
                     gamma(a=2,loc=0,scale=10).rvs,
                     norm(loc=0, scale=0.5).rvs,

@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.ma as ma
 
 # return a new function that has the heat kernel (given by delta) applied.
 def make_heat_adjusted(sigma):
@@ -24,8 +25,8 @@ identity = lambda x: x
 
 
 def squared_error(x, y, sigma=1):
-    # RBF kernel
-    d = np.sum((x - y) ** 2, axis=(1, 2))
+    # RBF kernel, supporting masked values in the observation
+    d = np.ma.sum((x - y) ** 2, axis=(1, 2))
     return np.exp(-d / (2.0 * sigma ** 2))
 
 
@@ -185,8 +186,7 @@ class ParticleFilter(object):
         """
 
         # apply dynamics and noise
-        self.particles = self.dynamics_fn(self.particles)
-        self.particles = self.noise_fn(self.particles)
+        self.particles = self.noise_fn(self.dynamics_fn(self.particles))        
 
         # hypothesise observations
         self.hypotheses = self.observe_fn(self.particles)
@@ -220,8 +220,7 @@ class ParticleFilter(object):
         # store mean (expected) hypothesis
         self.mean_hypothesis = np.sum(self.hypotheses.T * self.weights, axis=-1).T
         self.mean_state = np.sum(self.particles.T * self.weights, axis=-1).T
-
-        self.cov_state = np.cov(self.particles, rowvar=True, aweights=self.weights)
+        self.cov_state = np.cov(self.particles, rowvar=False, aweights=self.weights)
 
         # store MAP estimate 
         argmax_weight = np.argmax(self.weights)

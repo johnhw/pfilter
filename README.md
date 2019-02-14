@@ -14,6 +14,8 @@ Or install the git version:
 ## Usage
 Create a `ParticleFilter` object, then call `update(observation)` with an observation array to update the state of the particle filter.
 
+Calling `update()` without an observation will update the model without any data, i.e. perform a prediction step only.
+
 ### Model
 
 * Internal state space of `d` dimensions
@@ -28,6 +30,10 @@ You need to specify at the minimum:
 * an **observation function** `observe_fn(state) => observation matrix` which will return a predicted observation for an internal state.
 * a function that samples from an **initial distributions** `prior_fn => state matrix` for all of the internal state variables. These are usually distributions from `scipy.stats`. The utility function `independent_sample` makes it easy to concatenate sampling functions to sample the whole state vector.
 * a **weight function** `weight_fn(real_observed, hyp_observed) => weight vector` which specifies how well each of the `hyp_observed` arrays match the real observation `real_observed`. This must produce a strictly positive weight value for each hypothesized observation, where larger means more similar. This is often an RBF kernel or similar.
+
+#### Missing observations
+If you want to be able to deal with partial missing values in the observations, the weight function should support masked arrays. The `squared_error` function in `pfilter.py` does this, for example.
+
 
 ---
 

@@ -221,6 +221,8 @@ class ParticleFilter(object):
         self.mean_hypothesis = np.sum(self.hypotheses.T * self.weights, axis=-1).T
         self.mean_state = np.sum(self.particles.T * self.weights, axis=-1).T
 
+        self.cov_state = np.cov(self.particles, rowvar=True, aweights=self.weights)
+
         # store MAP estimate 
         argmax_weight = np.argmax(self.weights)
         self.map_state = self.particles[argmax_weight]

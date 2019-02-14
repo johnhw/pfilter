@@ -14,14 +14,47 @@ Or install the git version:
 ## Usage
 Create a `ParticleFilter` object, then call `update(observation)` with an observation array to update the state of the particle filter.
 
+### Model
+
+* Internal state space of `d` dimensions
+* Observation space of `h` dimensions
+* `n` particles estimating state in each time step
+
+Particles are represented as an `(n,d)` matrix of states, one state per row. Observations are generated from this matrix into an `(n,h)` matrix of hypothesized observations via the observation function.
+
+### Functions 
 You need to specify at the minimum:
+
 * an **observation function** `observe_fn(state) => observation matrix` which will return a predicted observation for an internal state.
-* a function that samples from an **initial distributions** `prior_fn=>(n,d) state matrix` for all of the internal state variables. These are usually distributions from `scipy.stats`. The utility function `independent_sample` makes it easy to concatenate sampling functions to sample the whole state vector.
-* a **weight function** `weight_fn(real_observed, hyp_observed_array) => weight vector` which specifies how well each of the `hyp_observed` arrays match the real observation `real_observed`. This must produce a strictly positive weight value, where larger means more similar.
+* a function that samples from an **initial distributions** `prior_fn => state matrix` for all of the internal state variables. These are usually distributions from `scipy.stats`. The utility function `independent_sample` makes it easy to concatenate sampling functions to sample the whole state vector.
+* a **weight function** `weight_fn(real_observed, hyp_observed) => weight vector` which specifies how well each of the `hyp_observed` arrays match the real observation `real_observed`. This must produce a strictly positive weight value for each hypothesized observation, where larger means more similar. This is often an RBF kernel or similar.
+
+---
 
 Typically, you would also specify:
-*  a `dynamics_fn(state) => predicted_state` to update the state based on internal (prediction) dynamics, and a 
-* `noise_fn(predicted_state) => noisy_state` to add diffusion into the sampling process. 
+*  **dynamics** a function `dynamics_fn(state) => predicted_state` to update the state based on internal (forward prediction) dynamics, and a 
+* **diffusion** a function `noise_fn(predicted_state) => noisy_state` to add diffusion into the sampling process. 
+
+---
+
+You might also specify:
+
+* **Internal weighting** a function `internal_weight_fn(state) => weight vector` which provides a weighting to apply on top of the weight function based on *internal* state. This is useful to impose penalties or to include learned inverse models in the inference.
+
+## Attributes
+
+The `ParticleFilter` object will have the following useful attributes after updating:
+
+* `original_particles` the `(n,d)` collection of particles in the last update step
+* `mean_state` the `(d,)` expectation of the state
+* `mean_hypothesized`  the `(h,)` expectation of the hypothesized observations
+* `cov_state` the `(d,d)` covariance matrix of the state
+* `map_state` the `(d,)` most likely state
+* `map_hypothesized` the `(h,)`  most likely hypothesized observation
+* `weights` the  `(n,)` normalised weights of each particle
+
+
+### Example
 
 For example, assuming there is a function `blob` which draws a blob on an image of some size (the same size as the observation):
 

@@ -36,8 +36,8 @@ columns = ["x", "y", "radius", "dx", "dy"]
 # (assumes x and y are coordinates in the range 0-img_size)
 prior_fn = independent_sample(
     [
-        norm(loc=img_size/2, scale=img_size/2).rvs,
-        norm(loc=img_size/2, scale=img_size/2).rvs,
+        norm(loc=img_size / 2, scale=img_size / 2).rvs,
+        norm(loc=img_size / 2, scale=img_size / 2).rvs,
         gamma(a=1, loc=0, scale=10).rvs,
         norm(loc=0, scale=0.5).rvs,
         norm(loc=0, scale=0.5).rvs,
@@ -46,14 +46,20 @@ prior_fn = independent_sample(
 
 # very simple linear dynamics: x += dx
 def velocity(x):
-    dt = 0.1
-    xp = x @ np.array([[1,0,0,dt,0],
-                  [0,1,0,0,dt],
-                  [0,0,1,0,0],
-                  [0,0,0,1,0],
-                  [0,0,0,0,1]]
-    ).T
-    
+    dt = 1.0
+    xp = (
+        x
+        @ np.array(
+            [
+                [1, 0, 0, dt, 0],
+                [0, 1, 0, 0, dt],
+                [0, 0, 1, 0, 0],
+                [0, 0, 0, 1, 0],
+                [0, 0, 0, 0, 1],
+            ]
+        ).T
+    )
+
     return xp
 
 
@@ -64,13 +70,13 @@ def test_filter():
         observe_fn=blob,
         n_particles=100,
         dynamics_fn=velocity,
-        noise_fn=lambda x: gaussian_noise(x, sigmas=[0.2, 0.2, 0.1, 0.1, 0.1]),
+        noise_fn=lambda x: gaussian_noise(x, sigmas=[0.2, 0.2, 0.1, 0.05, 0.05]),
         weight_fn=lambda x, y: squared_error(x, y, sigma=2),
         resample_proportion=0.1,
         column_names=columns,
     )
 
-    #np.random.seed(2018)
+    # np.random.seed(2018)
     # start in centre, random radius
     s = np.random.uniform(2, 8)
 
@@ -139,8 +145,8 @@ def test_filter():
             color,
             (int(y_hat * scale_factor), int(x_hat * scale_factor)),
             (
-                int(y_hat * scale_factor + 5 *  dy_hat * scale_factor),
-                int(x_hat * scale_factor + 5 * dx_hat  * scale_factor),
+                int(y_hat * scale_factor + 5 * dy_hat * scale_factor),
+                int(x_hat * scale_factor + 5 * dx_hat * scale_factor),
             ),
             (0, 0, 1),
             lineType=cv2.LINE_AA,

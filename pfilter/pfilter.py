@@ -5,6 +5,7 @@ import numpy.ma as ma
 def make_heat_adjusted(sigma):
     def heat_distance(d):
         return np.exp(-d ** 2 / (2.0 * sigma ** 2))
+
     return heat_distance
 
 
@@ -20,12 +21,29 @@ def resample(weights):
         indices.append(j - 1)
     return indices
 
-# identity functions for clearer naming
+
+# identity function for clearer naming
 identity = lambda x: x
 
 
 def squared_error(x, y, sigma=1):
-    # RBF kernel, supporting masked values in the observation
+    """
+        RBF kernel, supporting masked values in the observation
+        Parameters:
+        -----------
+        x : array (N,D) array of values
+        y : array (N,D) array of values
+
+        Returns:
+        -------
+
+        distance : scalar
+            Total similarity, using equation:
+
+                d(x,y) = e^(((x - y) ** 2) / (2 * sigma ** 2)
+
+            summed over all samples. Supports masked arrays.
+    """
     d = np.ma.sum((x - y) ** 2, axis=(1, 2))
     return np.exp(-d / (2.0 * sigma ** 2))
 
@@ -42,6 +60,7 @@ def gaussian_noise(x, sigmas):
     n = np.random.normal(np.zeros(len(sigmas)), sigmas, size=(x.shape[0], len(sigmas)))
     return x + n
 
+
 def independent_sample(fn_list):
     """Take a list of functions that each draw n samples from a distribution
     and concatenate the result into an n, d matrix
@@ -55,10 +74,11 @@ def independent_sample(fn_list):
         sample_fn: a function that will sample from all of the functions and concatenate 
         them
     """
+
     def sample_fn(n):
         return np.stack([fn(n) for fn in fn_list]).T
-    return sample_fn
 
+    return sample_fn
 
 
 class ParticleFilter(object):
@@ -140,7 +160,7 @@ class ParticleFilter(object):
         
         """
         self.column_names = column_names
-        self.prior_fn = prior_fn                
+        self.prior_fn = prior_fn
         self.n_particles = n_particles
         # perform initial sampling
         self.init_filter()
@@ -153,7 +173,7 @@ class ParticleFilter(object):
         self.resample_proportion = resample_proportion or 0.0
         self.particles = np.zeros((self.n_particles, self.d))
         self.internal_weight_fn = internal_weight_fn
-        
+
         self.original_particles = np.array(self.particles)
 
     def init_filter(self, mask=None):
@@ -171,7 +191,7 @@ class ParticleFilter(object):
         if mask is None:
             self.particles = new_sample
         else:
-            self.particles[mask,:] = new_sample[mask,:]
+            self.particles[mask, :] = new_sample[mask, :]
 
     def update(self, observed=None):
         """Update the state of the particle filter given an observation.
@@ -186,7 +206,7 @@ class ParticleFilter(object):
         """
 
         # apply dynamics and noise
-        self.particles = self.noise_fn(self.dynamics_fn(self.particles))        
+        self.particles = self.noise_fn(self.dynamics_fn(self.particles))
 
         # hypothesise observations
         self.hypotheses = self.observe_fn(self.particles)
@@ -222,7 +242,12 @@ class ParticleFilter(object):
         self.mean_state = np.sum(self.particles.T * self.weights, axis=-1).T
         self.cov_state = np.cov(self.particles, rowvar=False, aweights=self.weights)
 
-        # store MAP estimate 
+        # Compute effective sample size and entropy of weighting vector.
+        # These are useful statistics for adaptive particle filtering.
+        self.n_eff = 1.0 / np.sum(self.weights ** 2)
+        self.weight_entropy = np.sum(self.weights * np.log(self.weights))
+
+        # store MAP estimate
         argmax_weight = np.argmax(self.weights)
         self.map_state = self.particles[argmax_weight]
         self.map_hypothesis = self.hypotheses[argmax_weight]

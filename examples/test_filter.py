@@ -1,5 +1,5 @@
 # press ESC to exit the demo!
-from pfilter import ParticleFilter, gaussian_noise, squared_error, independent_sample
+from pfilter import ParticleFilter, gaussian_noise, cauchy_noise, squared_error, independent_sample
 import numpy as np
 
 # testing only
@@ -70,9 +70,9 @@ def test_filter():
         observe_fn=blob,
         n_particles=100,
         dynamics_fn=velocity,
-        noise_fn=lambda x: gaussian_noise(x, sigmas=[0.2, 0.2, 0.1, 0.05, 0.05]),
+        noise_fn=lambda x: cauchy_noise(x, sigmas=[0.05, 0.05, 0.01, 0.005, 0.005]),
         weight_fn=lambda x, y: squared_error(x, y, sigma=2),
-        resample_proportion=0.1,
+        resample_proportion=0.2,
         column_names=columns,
     )
 

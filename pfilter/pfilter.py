@@ -60,6 +60,17 @@ def gaussian_noise(x, sigmas):
     n = np.random.normal(np.zeros(len(sigmas)), sigmas, size=(x.shape[0], len(sigmas)))
     return x + n
 
+def cauchy_noise(x, sigmas):
+    """Apply diagonal covaraiance Cauchy-distributed noise to the N,D array x.
+    Parameters:
+    -----------
+        x : array
+            (N,D) array of values
+        sigmas : array
+            D-element vector of std. dev. for each column of x
+    """
+    n = np.random.standard_cauchy(size=(x.shape[0], len(sigmas))) * np.array(sigmas)
+    return x + n
 
 def independent_sample(fn_list):
     """Take a list of functions that each draw n samples from a distribution

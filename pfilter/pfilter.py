@@ -108,6 +108,10 @@ class ParticleFilter(object):
         The current most likely hypothesized observation
     map_state:
         The current most likely hypothesized state
+    n_eff:
+        Normalized effective sample size, in range 0.0 -> 1.0
+    weight_entropy:
+        Entropy of the weight distribution (in nats)
     hypotheses : array
         The (N,...) array of hypotheses for each particle
     weights : array
@@ -125,6 +129,7 @@ class ParticleFilter(object):
         resample_proportion=None,
         column_names=None,
         internal_weight_fn=None,
+        n_eff_threshold=1.0,
     ):
         """
         
@@ -155,6 +160,10 @@ class ParticleFilter(object):
                     Typically used to force particles inside of bounds, etc.                                        
         resample_proportion : float
                     proportion of samples to draw from the initial on each iteration.
+        n_eff_threshold=1.0: float
+                    effective sample size at which resampling will be performed (0.0->1.0). Values
+                    <1.0 will allow samples to propagate without the resampling step until
+                    the effective sample size (n_eff) drops below the specified threshold.
         column_names : list of strings
                     names of each the columns of the state vector
         
@@ -164,7 +173,7 @@ class ParticleFilter(object):
         self.n_particles = n_particles
         # perform initial sampling
         self.init_filter()
-
+        self.n_eff_threshold = n_eff_threshold
         self.d = self.particles.shape[1]
         self.observe_fn = observe_fn
         self.dynamics_fn = dynamics_fn or identity
@@ -233,26 +242,27 @@ class ParticleFilter(object):
         # normalise weights to resampling probabilities
         self.weights = weights / np.sum(weights)
 
+        # Compute effective sample size and entropy of weighting vector.
+        # These are useful statistics for adaptive particle filtering.
+        self.n_eff = (1.0 / np.sum(self.weights ** 2)) / self.n_particles
+        self.weight_entropy = np.sum(self.weights * np.log(self.weights))
+        
         # resampling (systematic resampling) step
-        indices = resample(self.weights)
-        self.particles = self.particles[indices, :]
+        if self.n_eff < self.n_eff_threshold:            
+            indices = resample(self.weights)
+            self.particles = self.particles[indices, :]
 
         # store mean (expected) hypothesis
         self.mean_hypothesis = np.sum(self.hypotheses.T * self.weights, axis=-1).T
         self.mean_state = np.sum(self.particles.T * self.weights, axis=-1).T
         self.cov_state = np.cov(self.particles, rowvar=False, aweights=self.weights)
 
-        # Compute effective sample size and entropy of weighting vector.
-        # These are useful statistics for adaptive particle filtering.
-        self.n_eff = 1.0 / np.sum(self.weights ** 2)
-        self.weight_entropy = np.sum(self.weights * np.log(self.weights))
-
         # store MAP estimate
         argmax_weight = np.argmax(self.weights)
         self.map_state = self.particles[argmax_weight]
         self.map_hypothesis = self.hypotheses[argmax_weight]
 
-        # preserve current sample set before any replineshment
+        # preserve current sample set before any replinishment
         self.original_particles = np.array(self.particles)
 
         # randomly resample some particles from the prior

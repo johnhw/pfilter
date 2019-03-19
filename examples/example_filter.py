@@ -63,7 +63,7 @@ def velocity(x):
     return xp
 
 
-def test_filter():
+def example_filter():
     # create the filter
     pf = ParticleFilter(
         prior_fn=prior_fn,
@@ -164,4 +164,4 @@ def test_filter():
 
 
 if __name__ == "__main__":
-    test_filter()
+    example_filter()

@@ -44,7 +44,8 @@ def squared_error(x, y, sigma=1):
 
             summed over all samples. Supports masked arrays.
     """
-    d = np.ma.sum((x - y) ** 2, axis=(1, 2))
+    dx = (x - y) ** 2
+    d = np.ma.sum(dx, axis=1)
     return np.exp(-d / (2.0 * sigma ** 2))
 
 
@@ -60,6 +61,7 @@ def gaussian_noise(x, sigmas):
     n = np.random.normal(np.zeros(len(sigmas)), sigmas, size=(x.shape[0], len(sigmas)))
     return x + n
 
+
 def cauchy_noise(x, sigmas):
     """Apply diagonal covaraiance Cauchy-distributed noise to the N,D array x.
     Parameters:
@@ -71,6 +73,7 @@ def cauchy_noise(x, sigmas):
     """
     n = np.random.standard_cauchy(size=(x.shape[0], len(sigmas))) * np.array(sigmas)
     return x + n
+
 
 def independent_sample(fn_list):
     """Take a list of functions that each draw n samples from a distribution
@@ -234,8 +237,16 @@ class ParticleFilter(object):
         if observed is not None:
             # compute similarity to observations
             # force to be positive
+
             weights = np.clip(
-                np.array(self.weight_fn(self.hypotheses, observed)), 0, np.inf
+                np.array(
+                    self.weight_fn(
+                        self.hypotheses.reshape(self.n_particles, -1),
+                        observed.reshape(1, -1),
+                    )
+                ),
+                0,
+                np.inf,
             )
         else:
             # we have no observation, so all particles weighted the same
@@ -257,9 +268,9 @@ class ParticleFilter(object):
         # These are useful statistics for adaptive particle filtering.
         self.n_eff = (1.0 / np.sum(self.weights ** 2)) / self.n_particles
         self.weight_entropy = np.sum(self.weights * np.log(self.weights))
-        
+
         # resampling (systematic resampling) step
-        if self.n_eff < self.n_eff_threshold:            
+        if self.n_eff < self.n_eff_threshold:
             indices = resample(self.weights)
             self.particles = self.particles[indices, :]
 

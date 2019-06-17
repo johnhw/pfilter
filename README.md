@@ -99,6 +99,6 @@ For example, assuming there is a function `blob` which draws a blob on an image 
         pf.update(image) 
  ```
 
-See the notebook [examples/test_filter.py](examples/test_filter.py) for a working example using `skimage` and `OpenCV` which tracks a moving white circle.
+See the notebook [examples/example_filter.py](examples/test_filter.py) for a working example using `skimage` and `OpenCV` which tracks a moving white circle.
     
     

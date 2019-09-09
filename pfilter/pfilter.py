@@ -185,8 +185,6 @@ class ParticleFilter(object):
         self.column_names = column_names
         self.prior_fn = prior_fn
         self.n_particles = n_particles
-        # perform initial sampling
-        self.init_filter()
         self.n_eff_threshold = n_eff_threshold
         self.d = self.particles.shape[1]
         self.observe_fn = observe_fn
@@ -196,7 +194,8 @@ class ParticleFilter(object):
         self.resample_proportion = resample_proportion or 0.0
         self.particles = np.zeros((self.n_particles, self.d))
         self.internal_weight_fn = internal_weight_fn
-
+        # perform initial sampling
+        self.init_filter()
         self.original_particles = np.array(self.particles)
 
     def init_filter(self, mask=None):

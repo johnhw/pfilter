@@ -1,5 +1,11 @@
 # press ESC to exit the demo!
-from pfilter import ParticleFilter, gaussian_noise, cauchy_noise, squared_error, independent_sample
+from pfilter import (
+    ParticleFilter,
+    gaussian_noise,
+    cauchy_noise,
+    squared_error,
+    independent_sample,
+)
 import numpy as np
 
 # testing only
@@ -20,7 +26,7 @@ def blob(x):
     y = np.zeros((x.shape[0], img_size, img_size))
     for i, particle in enumerate(x):
         rr, cc = skimage.draw.circle(
-            particle[0], particle[1], particle[2], shape=(img_size, img_size)
+            particle[0], particle[1], max(particle[2], 1), shape=(img_size, img_size)
         )
         y[i, rr, cc] = 1
     return y
@@ -126,7 +132,7 @@ def example_filter():
             cv2.circle(
                 color,
                 (int(ya * scale_factor), int(xa * scale_factor)),
-                int(sa * scale_factor),
+                max(int(sa * scale_factor), 1),
                 (1, 0, 0),
                 1,
             )
@@ -135,7 +141,7 @@ def example_filter():
         cv2.circle(
             color,
             (int(y_hat * scale_factor), int(x_hat * scale_factor)),
-            int(s_hat * scale_factor),
+            max(int(sa * scale_factor), 1),
             (0, 1, 0),
             1,
             lineType=cv2.LINE_AA,

@@ -1,6 +1,17 @@
 # pfilter
 Basic Python particle filter. Plain SIR filtering, with systematic resampling. Written to be simple and clear; not necessarily most efficient or most flexible implementation. Depends on [NumPy](http://numpy.org) only. 
 
+## Uses
+
+This repo is useful for understanding how a particle filter works, or a quick way to develop a custom filter of your own from a relatively simple codebase. There are more mature and sophisticated packages for probabilistic filtering in Python (especially for Kalman filtering) if you want an off-the-shelf solution:
+
+* [particles](https://github.com/nchopin/particles) Extensive particle filtering, including smoothing and quasi-SMC algorithms
+* [FilterPy](https://github.com/rlabbe/filterpy) Provides extensive Kalman filtering and basic particle filtering.
+* [pykalman](https://github.com/pykalman/pykalman) Easy to use KF, EKF and UKF implementations
+* [simdkalman](https://github.com/oseiskar/simdkalman) Fast implmentations of plain Kalman filter banks.
+
+
+
 ## Installation
 
 Available via PyPI:

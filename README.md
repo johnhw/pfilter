@@ -27,25 +27,25 @@ Particles are represented as an `(n,d)` matrix of states, one state per row. Obs
 ### Functions 
 You need to specify at the minimum:
 
-* an **observation function** `observe_fn(state) => observation matrix` which will return a predicted observation for an internal state.
-* a function that samples from an **initial distributions** `prior_fn => state matrix` for all of the internal state variables. These are usually distributions from `scipy.stats`. The utility function `independent_sample` makes it easy to concatenate sampling functions to sample the whole state vector.
-* a **weight function** `weight_fn(real_observed, hyp_observed) => weight vector` which specifies how well each of the `hyp_observed` arrays match the real observation `real_observed`. This must produce a strictly positive weight value for each hypothesized observation, where larger means more similar. This is often an RBF kernel or similar.
+* an **observation function** `observe_fn(state (n,d)) => observation matrix (n,h)` which will return a predicted observation for an internal state.
+* a function that samples from an **initial distributions** `prior_fn => state matrix (n,d)` for all of the internal state variables. These are usually distributions from `scipy.stats`. The utility function `independent_sample` makes it easy to concatenate sampling functions to sample the whole state vector.
+* a **weight function** `weight_fn(real_observed (h,), hyp_observed (n,h)) => weight vector (n,)` which specifies how well each of the `hyp_observed` arrays match the real observation `real_observed`. This must produce a strictly positive weight value for each hypothesized observation, where larger means more similar. This is often an RBF kernel or similar.
 
 #### Missing observations
-If you want to be able to deal with partial missing values in the observations, the weight function should support masked arrays. The `squared_error` function in `pfilter.py` does this, for example.
+If you want to be able to deal with partial missing values in the observations, the weight function should support masked arrays. The `squared_error(a,b)` function in `pfilter.py` does this, for example.
 
 
 ---
 
 Typically, you would also specify:
-*  **dynamics** a function `dynamics_fn(state) => predicted_state` to update the state based on internal (forward prediction) dynamics, and a 
-* **diffusion** a function `noise_fn(predicted_state) => noisy_state` to add diffusion into the sampling process. 
+*  **dynamics** a function `dynamics_fn(state (n,d)) => predicted_state (n,d)` to update the state based on internal (forward prediction) dynamics, and a 
+* **diffusion** a function `noise_fn(predicted_state (n,d)) => noisy_state (n,d)` to add diffusion into the sampling process (though you could also merge into the dynamics). 
 
 ---
 
 You might also specify:
 
-* **Internal weighting** a function `internal_weight_fn(state) => weight vector` which provides a weighting to apply on top of the weight function based on *internal* state. This is useful to impose penalties or to include learned inverse models in the inference.
+* **Internal weighting** a function `internal_weight_fn(state (n,d)) => weight vector (n,)` which provides a weighting to apply on top of the weight function based on *internal* state. This is useful to impose penalties or to include learned inverse models in the inference.
 
 ## Attributes
 
@@ -62,7 +62,7 @@ The `ParticleFilter` object will have the following useful attributes after upda
 
 ### Example
 
-For example, assuming there is a function `blob` which draws a blob on an image of some size (the same size as the observation):
+For example, assuming we observe 32x32 images and want to track a moving circle. Assume the internal state we are estimating is the 4D vector (x, y, dx, dy), with 200 particles
 
 ```python
         from pfilter import ParticleFilter, gaussian_noise, squared_error, independent_sample
@@ -98,6 +98,14 @@ For example, assuming there is a function `blob` which draws a blob on an image 
         # assuming image of the same dimensions/type as blob will produce
         pf.update(image) 
  ```
+
+
+* `blob` (200, 4) -> (200, 1024) which draws a blob on an image of size 32x32 (1024 pixels) for each internal state, our observation function
+* `velocity` (200, 4) -> (200, 4), our dynamics function, which just applies a single Euler step integrating the velocity
+* `prior_fn` which generates a (200,4) initial random state
+* `gaussian_noise` (200, 4) -> (200,4) which adds noise to the internal state
+* `squared_error` ((200,1024), (1024,)) -> (200,) the similarity measurement
+
 
 See the notebook [examples/example_filter.py](examples/test_filter.py) for a working example using `skimage` and `OpenCV` which tracks a moving white circle.
     

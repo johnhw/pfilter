@@ -40,11 +40,10 @@ You need to specify at the minimum:
 
 * an **observation function** `observe_fn(state (n,d)) => observation matrix (n,h)` which will return a predicted observation for an internal state.
 * a function that samples from an **initial distributions** `prior_fn => state matrix (n,d)` for all of the internal state variables. These are usually distributions from `scipy.stats`. The utility function `independent_sample` makes it easy to concatenate sampling functions to sample the whole state vector.
-* a **weight function** `weight_fn(real_observed (h,), hyp_observed (n,h)) => weight vector (n,)` which specifies how well each of the `hyp_observed` arrays match the real observation `real_observed`. This must produce a strictly positive weight value for each hypothesized observation, where larger means more similar. This is often an RBF kernel or similar.
+* a **weight function** `weight_fn(hyp_observed (n,h), real_observed (h,)) => weight vector (n,)` which specifies how well each of the `hyp_observed` arrays match the real observation `real_observed`. This must produce a strictly positive weight value for each hypothesized observation, where larger means more similar. This is often an RBF kernel or similar.
 
 #### Missing observations
 If you want to be able to deal with partial missing values in the observations, the weight function should support masked arrays. The `squared_error(a,b)` function in `pfilter.py` does this, for example.
-
 
 ---
 

@@ -162,7 +162,7 @@ class ParticleFilter(object):
                       dynamics function, which takes an (N,D) state array and returns a new one with the dynamics applied.
         noise_fn : function(states) => states
                     noise function, takes a state vector and returns a new one with noise added.
-        weight_fn :  function(real, hypothesized) => weights
+        weight_fn :  function(hypothesized, real) => weights
                     computes the distance from the real sensed variable and that returned by observe_fn. Takes
                     a an array of N hypothesised sensor outputs (e.g. array of dimension (N,W,H)) and the observed output (e.g. array of dimension (W,H)) and 
                     returns a strictly positive weight for the each hypothesis as an N-element vector. 

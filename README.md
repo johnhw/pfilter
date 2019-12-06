@@ -69,6 +69,10 @@ The `ParticleFilter` object will have the following useful attributes after upda
 * `map_hypothesized` the `(h,)`  most likely hypothesized observation
 * `weights` the  `(n,)` normalised weights of each particle
 
+## In equations
+
+
+![](imgs/particle_equations.png)
 
 ### Example
 
@@ -118,5 +122,31 @@ For example, assuming we observe 32x32 images and want to track a moving circle.
 
 
 See the notebook [examples/example_filter.py](examples/test_filter.py) for a working example using `skimage` and `OpenCV` which tracks a moving white circle.
+
     
     
+
+
+---
+<!--
+\begin{align*} 
+d & \in \mathbb{Z}^+ & \text{state dimension} \\
+h & \in \mathbb{Z}^+& \text{observation dimension} \\
+n & \in \mathbb{Z}^+& \text{number of particles} \\
+{\bf x}^i &\in \mathbb{R}^d  & \text{state vectors}\\
+{\bf y}^i &\in \mathbb{R}^h & \text{observation vectors}\\
+
+{\bf x}^{i}(0) & \sim \pi({\bf x}) & \text{prior}\\
+{\bf x}^i(t) & = g({\bf x}^i(t-1)) + \epsilon(t) & \text{dynamics}\\
+{\bf y}^i(t) & = f({\bf x}^i(t))\ & \text{observation}\\
+
+w_i & = k\left({\bf y}^{i}(t), {\bf y}'(t)\right)v({\bf x}^{i}(t)) & \text{weight}\\
+w'_i & = \frac{w_i}{\sum_j w_j} & \text{normalisation}\\
+
+k\left({\bf y}, {\bf y'}\right) & \  (\mathbb{R}^h, \mathbb{R}^h) \rightarrow \mathbb{R^+} & \text{weight function}
+\\ 
+v({\bf x}) &\  \mathbb{R}^d\rightarrow\mathbb{R}^+ & \text{internal weight function}\\
+g(\bf{x}) & \ \mathbb{R}^d \rightarrow  \mathbb{R}^d & \text{dynamics function} \\
+f(\bf{x}) & \ \mathbb{R}^d \rightarrow  \mathbb{R}^h & \text{observation function} \\
+\end{align*}
+-->

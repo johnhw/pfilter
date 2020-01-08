@@ -7,8 +7,8 @@ This repo is useful for understanding how a particle filter works, or a quick wa
 
 * [particles](https://github.com/nchopin/particles) Extensive particle filtering, including smoothing and quasi-SMC algorithms
 * [FilterPy](https://github.com/rlabbe/filterpy) Provides extensive Kalman filtering and basic particle filtering.
-* [pyfilter](https://github.com/tingiskhan/pyfilter) provides UKF, SISR filtering, and has a number of advanced algorithms implemented, with PyTorch backend.
-* [pykalman](https://github.com/pykalman/pykalman) Easy to use KF, EKF and UKF implementations
+* [pyfilter](https://github.com/tingiskhan/pyfilter) provides Unscented Kalman Filtering, Sequential Importance Resampling and Auxiliary Particle Filter models, and has a number of advanced algorithms implemented, with PyTorch backend.
+* [pykalman](https://github.com/pykalman/pykalman) Easy to use Kalman Filter, Extended Kalman Filter and Unscented Kalman Filter implementations
 * [simdkalman](https://github.com/oseiskar/simdkalman) Fast implmentations of plain Kalman filter banks.
 
 

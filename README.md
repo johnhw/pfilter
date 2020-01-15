@@ -3,14 +3,19 @@ Basic Python particle filter. Plain SIR filtering, with systematic resampling. W
 
 ## Uses
 
-This repo is useful for understanding how a particle filter works, or a quick way to develop a custom filter of your own from a relatively simple codebase. There are more mature and sophisticated packages for probabilistic filtering in Python (especially for Kalman filtering) if you want an off-the-shelf solution:
+This repo is useful for understanding how a particle filter works, or a quick way to develop a custom filter of your own from a relatively simple codebase. 
+### Alternatives
+There are more mature and sophisticated packages for probabilistic filtering in Python (especially for Kalman filtering) if you want an off-the-shelf solution:
 
+#### Particle filtering
 * [particles](https://github.com/nchopin/particles) Extensive particle filtering, including smoothing and quasi-SMC algorithms
 * [FilterPy](https://github.com/rlabbe/filterpy) Provides extensive Kalman filtering and basic particle filtering.
 * [pyfilter](https://github.com/tingiskhan/pyfilter) provides Unscented Kalman Filtering, Sequential Importance Resampling and Auxiliary Particle Filter models, and has a number of advanced algorithms implemented, with PyTorch backend.
+
+#### Kalman filtering
 * [pykalman](https://github.com/pykalman/pykalman) Easy to use Kalman Filter, Extended Kalman Filter and Unscented Kalman Filter implementations
 * [simdkalman](https://github.com/oseiskar/simdkalman) Fast implmentations of plain Kalman filter banks.
-
+* [torch-kalman](https://github.com/strongio/torch-kalman) PyTorch implementation of Kalman filters.
 
 
 ## Installation

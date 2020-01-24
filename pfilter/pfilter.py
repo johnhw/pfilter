@@ -241,7 +241,9 @@ class ParticleFilter(object):
         """
 
         # apply dynamics and noise
-        self.particles = self.noise_fn(self.dynamics_fn(self.particles), **kwargs)
+        self.particles = self.noise_fn(
+            self.dynamics_fn(self.particles, **kwargs), **kwargs
+        )
 
         # hypothesise observations
         self.hypotheses = self.observe_fn(self.particles, **kwargs)

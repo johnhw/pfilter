@@ -143,6 +143,7 @@ class ParticleFilter(object):
         resample_proportion=None,
         column_names=None,
         internal_weight_fn=None,
+        transform_fn=None,
         n_eff_threshold=1.0,
     ):
         """
@@ -171,7 +172,11 @@ class ParticleFilter(object):
                     Reweights the particles based on their *internal* state. This is function which takes
                     an (N,D) array of internal states and the observation and 
                     returns a strictly positive weight for the each state as an N-element vector. 
-                    Typically used to force particles inside of bounds, etc.                                        
+                    Typically used to force particles inside of bounds, etc.       
+        transform_fn: function(states, weights) => transformed_states
+                    Applied at the very end of the update step, if specified. Updates the attribute
+                    `transformed_particles`. Useful when the particle state needs to be projected
+                    into a different space.
         resample_proportion : float
                     proportion of samples to draw from the initial on each iteration.
         n_eff_threshold=1.0: float
@@ -192,6 +197,8 @@ class ParticleFilter(object):
         self.dynamics_fn = dynamics_fn or identity
         self.noise_fn = noise_fn or identity
         self.weight_fn = weight_fn or squared_error
+        self.transform_fn = transform_fn
+        self.transformed_particles = None
         self.resample_proportion = resample_proportion or 0.0
         self.internal_weight_fn = internal_weight_fn
         self.original_particles = np.array(self.particles)
@@ -230,6 +237,7 @@ class ParticleFilter(object):
             dynamics_fn(x, **kwargs)
             noise_fn(x, **kwargs)
             internal_weight_function(x, y, **kwargs)
+            transform_fn(x, **kwargs)
         """
 
         # apply dynamics and noise
@@ -294,6 +302,13 @@ class ParticleFilter(object):
         # preserve current sample set before any replenishment
         self.original_particles = np.array(self.particles)
 
+        # apply any post-processing
+        if self.transform_fn:
+            self.transformed_particles = self.transform_fn(
+                self.original_particles, self.weights, **kwargs
+            )
+        else:
+            self.transformed_particles = self.original_particles
         # randomly resample some particles from the prior
         random_mask = (
             np.random.random(size=(self.n_particles,)) < self.resample_proportion

@@ -57,6 +57,12 @@ You might also specify:
 
 * **Internal weighting** a function `internal_weight_fn(state (n,d)) => weight vector (n,)` which provides a weighting to apply on top of the weight function based on *internal* state. This is useful to impose penalties or to include learned inverse models in the inference.
 
+### Passing values to functions
+
+Sometimes it is useful to pass inputs to callback functions like `dynamics_fn(x)` at each time step. You can do this by giving keyword arguments to `observe()`. 
+
+If you call `pf.observe(y, t=5)` **all** of the functions `dynamics_fn, weight_fn, noise_fn, internal_weight_fn, observe_fn` will receive the keyword argument `t=5`. ALl `kwargs` are forwarded to these calls. You can just ignore them if not used (e.g. define `dynamics_fn = lambda x, **kwargs: real_dynamics(x)`) but this can be useful for propagating inputs that are neither internal states nor observed states to the filter. If no `kwargs` are given to `observe`, then no extra arguments are passed to any of callbacks.
+
 ## Attributes
 
 The `ParticleFilter` object will have the following useful attributes after updating:

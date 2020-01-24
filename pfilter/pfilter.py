@@ -213,7 +213,7 @@ class ParticleFilter(object):
         else:
             self.particles[mask, :] = new_sample[mask, :]
 
-    def update(self, observed=None):
+    def update(self, observed=None, **kwargs):
         """Update the state of the particle filter given an observation.
         
         Parameters:
@@ -223,13 +223,20 @@ class ParticleFilter(object):
             The observed output, in the same format as observe_fn() will produce. This is typically the
             input from the sensor observing the process (e.g. a camera image in optical tracking).
             If None, then the observation step is skipped, and the filter will run one step in prediction-only mode.
+
+        kwargs: any keyword arguments specified will be passed on to:
+            observe_fn(y, **kwargs)
+            weight_fn(x, **kwargs)
+            dynamics_fn(x, **kwargs)
+            noise_fn(x, **kwargs)
+            internal_weight_function(x, y, **kwargs)
         """
 
         # apply dynamics and noise
-        self.particles = self.noise_fn(self.dynamics_fn(self.particles))
+        self.particles = self.noise_fn(self.dynamics_fn(self.particles), **kwargs)
 
         # hypothesise observations
-        self.hypotheses = self.observe_fn(self.particles)
+        self.hypotheses = self.observe_fn(self.particles, **kwargs)
 
         if observed is not None:
             # compute similarity to observations
@@ -240,6 +247,7 @@ class ParticleFilter(object):
                     self.weight_fn(
                         self.hypotheses.reshape(self.n_particles, -1),
                         observed.reshape(1, -1),
+                        **kwargs
                     )
                 ),
                 0,
@@ -253,7 +261,9 @@ class ParticleFilter(object):
         # most filters don't use this, but can be a useful way of combining
         # forward and inverse models
         if self.internal_weight_fn is not None:
-            internal_weights = self.internal_weight_fn(self.particles, observed)
+            internal_weights = self.internal_weight_fn(
+                self.particles, observed, **kwargs
+            )
             internal_weights = np.clip(internal_weights, 0, np.inf)
             internal_weights = internal_weights / np.sum(internal_weights)
             weights *= internal_weights
@@ -281,7 +291,7 @@ class ParticleFilter(object):
         self.map_state = self.particles[argmax_weight]
         self.map_hypothesis = self.hypotheses[argmax_weight]
 
-        # preserve current sample set before any replinishment
+        # preserve current sample set before any replenishment
         self.original_particles = np.array(self.particles)
 
         # randomly resample some particles from the prior

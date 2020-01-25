@@ -287,10 +287,13 @@ class ParticleFilter(object):
         self.weight_entropy = np.sum(self.weights * np.log(self.weights))
 
         # resampling (systematic resampling) step
-        if self.n_eff < self.n_eff_threshold:
-            indices = resample(self.weights)
-            self.particles = self.particles[indices, :]
+         # resampling (systematic resampling) step                                                                         
+        if self.n_eff < self.n_eff_threshold:                                                                             
+            indices = resample(self.weights)                                                                              
+            self.particles = self.particles[indices, :]                                                                   
+            self.weights = self.weights[indices] 
 
+            
         # store mean (expected) hypothesis
         self.mean_hypothesis = np.sum(self.hypotheses.T * self.weights, axis=-1).T
         self.mean_state = np.sum(self.particles.T * self.weights, axis=-1).T

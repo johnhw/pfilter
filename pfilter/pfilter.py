@@ -135,7 +135,7 @@ class ParticleFilter(object):
     def __init__(
         self,
         prior_fn,
-        observe_fn,
+        observe_fn=None,
         n_particles=200,
         dynamics_fn=None,
         noise_fn=None,
@@ -193,7 +193,7 @@ class ParticleFilter(object):
         self.init_filter()
         self.n_eff_threshold = n_eff_threshold
         self.d = self.particles.shape[1]
-        self.observe_fn = observe_fn
+        self.observe_fn = observe_fn  or identity
         self.dynamics_fn = dynamics_fn or identity
         self.noise_fn = noise_fn or identity
         self.weight_fn = weight_fn or squared_error
@@ -247,6 +247,7 @@ class ParticleFilter(object):
 
         # hypothesise observations
         self.hypotheses = self.observe_fn(self.particles, **kwargs)
+        
 
         if observed is not None:
             # compute similarity to observations
@@ -279,21 +280,19 @@ class ParticleFilter(object):
             weights *= internal_weights
 
         # normalise weights to resampling probabilities
-        self.weights = weights / np.sum(weights)
+        self.weight_normalisation = np.sum(weights)
+        self.weights = weights / self.weight_normalisation
+        
 
         # Compute effective sample size and entropy of weighting vector.
         # These are useful statistics for adaptive particle filtering.
         self.n_eff = (1.0 / np.sum(self.weights ** 2)) / self.n_particles
         self.weight_entropy = np.sum(self.weights * np.log(self.weights))
 
-        # resampling (systematic resampling) step
-         # resampling (systematic resampling) step                                                                         
-        if self.n_eff < self.n_eff_threshold:                                                                             
-            indices = resample(self.weights)                                                                              
-            self.particles = self.particles[indices, :]                                                                   
-            self.weights = self.weights[indices] 
+        # preserve current sample set before any replenishment
+        self.original_particles = np.array(self.particles)
+        
 
-            
         # store mean (expected) hypothesis
         self.mean_hypothesis = np.sum(self.hypotheses.T * self.weights, axis=-1).T
         self.mean_state = np.sum(self.particles.T * self.weights, axis=-1).T
@@ -304,8 +303,7 @@ class ParticleFilter(object):
         self.map_state = self.particles[argmax_weight]
         self.map_hypothesis = self.hypotheses[argmax_weight]
 
-        # preserve current sample set before any replenishment
-        self.original_particles = np.array(self.particles)
+        
 
         # apply any post-processing
         if self.transform_fn:
@@ -318,6 +316,14 @@ class ParticleFilter(object):
         random_mask = (
             np.random.random(size=(self.n_particles,)) < self.resample_proportion
         )
+
+        # resampling (systematic resampling) step
+         # resampling (systematic resampling) step                                                                         
+        if self.n_eff < self.n_eff_threshold:                                                                             
+            indices = resample(self.weights)                                                                              
+            self.particles = self.particles[indices, :]                                                                   
+            #self.weights = self.weights[indices] 
+
         self.resampled_particles = random_mask
         self.init_filter(mask=random_mask)
 

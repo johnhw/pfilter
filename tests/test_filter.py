@@ -22,9 +22,46 @@ def test_init():
         internal_weight_fn=lambda x, y: np.ones(len(x)),
         n_eff_threshold=1.0,
     )
-    pf.update(np.array([[1]]))
+    pf.update(np.array([1]))
 
+def test_weights():
+    # verify weights sum to 1.0
+    pf = ParticleFilter(
+        prior_fn=lambda n: np.random.normal(0, 1, (n, 1)),        
+        n_particles=100,        
+    )
+    for i in range(10):
+        pf.update(np.array([1]))
+        assert len(pf.weights) == len(pf.particles) == 100
+        assert pf.particles.shape==(100,1)
+        assert np.allclose(np.sum(pf.weights), 1.0)
 
+def test_no_observe():
+    # check that 
+    pf = ParticleFilter(
+        prior_fn=lambda n: np.random.normal(0, 1, (n, 1)),        
+        n_particles=10,        
+    )
+    for i in range(10):        
+        pf.update(None)
+        assert len(pf.weights) == len(pf.particles) == 10
+        assert pf.particles.shape==(10,1)
+        assert np.allclose(np.sum(pf.weights), 1.0)        
+
+import numpy.ma as ma
+def test_partial_missing():
+    # check that 
+    pf = ParticleFilter(
+        prior_fn=lambda n: np.random.normal(0, 1, (n, 4)),        
+        n_particles=100,        
+    )
+    for i in range(10):        
+        masked_input = ma.masked_equal(np.array([1,999,0,999]), 999)
+        pf.update(masked_input)
+        pf.update(np.array([1,1,1,1]))
+        assert np.allclose(np.sum(pf.weights), 1.0)      
+        assert len(pf.weights) == len(pf.particles) == 100
+        
 def test_transform_fn():
     # silly initialisation, but uses all parameters
     pf = ParticleFilter(
@@ -40,8 +77,9 @@ def test_transform_fn():
         internal_weight_fn=lambda x, y: np.ones(len(x)),
         n_eff_threshold=1.0,
     )
-    pf.update(np.array([[1]]))
-    assert np.allclose(pf.original_particles * 2.0, pf.transformed_particles)
+    for i in range(10):
+        pf.update(np.array([1]))    
+        assert np.allclose(pf.original_particles * 2.0, pf.transformed_particles)
 
 
 def test_kwargs():

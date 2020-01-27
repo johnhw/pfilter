@@ -12,16 +12,13 @@ def make_heat_adjusted(sigma):
 ## originally by Roger Labbe, under an MIT License
 def systematic_resample(weights):
     n = len(weights)
-    positions = (np.arange(n) + np.random.uniform(0,1)) / n 
-    
+    positions = (np.arange(n) + np.random.uniform(0,1)) / n     
     return create_indices(positions, weights)
     
 def stratified_resample(weights):
     n = len(weights)    
-    positions = (np.random.uniform(0,1,n) + np.arange(n)) / n 
-         
+    positions = (np.random.uniform(0,1,n) + np.arange(n)) / n          
     return create_indices(positions, weights)
-
 
 def residual_resample(weights):
     n = len(weights)
@@ -55,9 +52,12 @@ def create_indices(positions, weights):
     
     return indices
 
+### end rlabbe's resampling functions
 
 def multinomial_resample(weights):
     return np.random.choice(np.arange(len(weights)), p=weights, size=len(weights))
+
+
 
 
 # resample function from http://scipy-cookbook.readthedocs.io/items/ParticleFilter.html

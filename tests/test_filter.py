@@ -24,6 +24,29 @@ def test_init():
     )
     pf.update(np.array([1]))
 
+def basic_resample(weights):
+    return np.random.choice(np.arange(len(weights)), p=weights, size=len(weights))
+
+def test_resampler():    
+    pf = ParticleFilter(
+        prior_fn=lambda n: np.random.normal(0, 1, (n, 1)),        
+        n_particles=100,        
+        resample_fn = None # should use default
+    )
+    for i in range(10):
+        pf.update(np.array([1]))
+
+    pf = ParticleFilter(
+        prior_fn=lambda n: np.random.normal(0, 1, (n, 1)),        
+        n_particles=100,        
+        resample_fn = basic_resample 
+    )
+    for i in range(10):
+        pf.update(np.array([1]))
+
+
+  
+  
 def test_weights():
     # verify weights sum to 1.0
     pf = ParticleFilter(

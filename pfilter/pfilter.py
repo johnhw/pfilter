@@ -21,6 +21,8 @@ def resample(weights):
         indices.append(j - 1)
     return indices
 
+def basic_resample(weights):
+    return np.random.choice(np.arange(len(weights)), p=weights, size=len(weights))
 
 # identity function for clearer naming
 identity = lambda x: x
@@ -136,6 +138,7 @@ class ParticleFilter(object):
         self,
         prior_fn,
         observe_fn=None,
+        resample_fn=None,
         n_particles=200,
         dynamics_fn=None,
         noise_fn=None,
@@ -157,6 +160,7 @@ class ParticleFilter(object):
         observe_fn : function(states) => observations
                     transformation function from the internal state to the sensor state. Takes an (N,D) array of states 
                     and returns the expected sensor output as an array (e.g. a (N,W,H) tensor if generating W,H dimension images).
+        resample_fn: A resampling function weights (N,) => indices (N,)
         n_particles : int 
                      number of particles in the filter
         dynamics_fn : function(states) => states
@@ -187,6 +191,7 @@ class ParticleFilter(object):
                     names of each the columns of the state vector
         
         """
+        self.resample_fn = resample_fn or resample
         self.column_names = column_names
         self.prior_fn = prior_fn
         self.n_particles = n_particles
@@ -317,10 +322,10 @@ class ParticleFilter(object):
             np.random.random(size=(self.n_particles,)) < self.resample_proportion
         )
 
-        # resampling (systematic resampling) step
+        
          # resampling (systematic resampling) step                                                                         
         if self.n_eff < self.n_eff_threshold:                                                                             
-            indices = resample(self.weights)                                                                              
+            indices = self.resample_fn(self.weights)                                                                              
             self.particles = self.particles[indices, :]                                                                   
             #self.weights = self.weights[indices] 
 

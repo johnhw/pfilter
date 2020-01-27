@@ -4,6 +4,7 @@ from pfilter import (
     gaussian_noise,
     cauchy_noise,
     make_heat_adjusted,
+    systematic_resample, stratified_resample, multinomial_resample, residual_resample
 )
 import numpy as np
 
@@ -44,8 +45,15 @@ def test_resampler():
     for i in range(10):
         pf.update(np.array([1]))
 
-
-  
+    for sampler in [stratified_resample, systematic_resample, residual_resample, multinomial_resample]:
+        pf = ParticleFilter(
+            prior_fn=lambda n: np.random.normal(0, 1, (n, 1)),        
+            n_particles=100,        
+            resample_fn = sampler
+        )
+        for i in range(10):
+            pf.update(np.array([1]))
+    
   
 def test_weights():
     # verify weights sum to 1.0

@@ -8,6 +8,57 @@ def make_heat_adjusted(sigma):
 
     return heat_distance
 
+## Resampling based on the examples at: https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python/blob/master/12-Particle-Filters.ipynb
+## originally by Roger Labbe, under an MIT License
+def systematic_resample(weights):
+    n = len(weights)
+    positions = (np.arange(n) + np.random.uniform(0,1)) / n 
+    
+    return create_indices(positions, weights)
+    
+def stratified_resample(weights):
+    n = len(weights)    
+    positions = (np.random.uniform(0,1,n) + np.arange(n)) / n 
+         
+    return create_indices(positions, weights)
+
+
+def residual_resample(weights):
+    n = len(weights)
+    indices = np.zeros(n, np.uint32)
+    # take int(N*w) copies of each weight
+    num_copies = (n*weights).astype(np.uint32)
+    k = 0
+    for i in range(n):        
+        for _ in range(num_copies[i]): # make n copies
+            indices[k] = i
+            k += 1
+    # use multinormial resample on the residual to fill up the rest.
+    residual = weights - num_copies     # get fractional part
+    residual /= np.sum(residual)     
+    cumsum = np.cumsum(residual)
+    cumsum[-1] = 1 
+    indices[k:n] = np.searchsorted(cumsum, np.random.uniform(0, 1, n-k))
+    return indices
+    
+def create_indices(positions, weights):
+    n = len(weights)
+    indices = np.zeros(n, np.uint32)
+    cumsum = np.cumsum(weights)     
+    i, j = 0, 0
+    while i < n:
+        if positions[i] < cumsum[j]:
+            indices[i] = j
+            i += 1
+        else:
+            j += 1
+    
+    return indices
+
+
+def multinomial_resample(weights):
+    return np.random.choice(np.arange(len(weights)), p=weights, size=len(weights))
+
 
 # resample function from http://scipy-cookbook.readthedocs.io/items/ParticleFilter.html
 def resample(weights):
@@ -21,8 +72,6 @@ def resample(weights):
         indices.append(j - 1)
     return indices
 
-def basic_resample(weights):
-    return np.random.choice(np.arange(len(weights)), p=weights, size=len(weights))
 
 # identity function for clearer naming
 identity = lambda x: x

@@ -1,5 +1,5 @@
 # pfilter
-Basic Python particle filter. Plain SIR filtering, with systematic resampling. Written to be simple and clear; not necessarily most efficient or most flexible implementation. Depends on [NumPy](http://numpy.org) only. 
+Basic Python particle filter. Plain SIR filtering, with various resampling algorithms. Written to be simple and clear; not necessarily most efficient or most flexible implementation. Depends on [NumPy](http://numpy.org) only. 
 
 ## Uses
 
@@ -48,8 +48,7 @@ You need to specify at the minimum:
 * a function that samples from an **initial distributions** `prior_fn => state matrix (n,d)` for all of the internal state variables. These are usually distributions from `scipy.stats`. The utility function `independent_sample` makes it easy to concatenate sampling functions to sample the whole state vector.
 * a **weight function** `weight_fn(hyp_observed (n,h), real_observed (h,)) => weight vector (n,)` which specifies how well each of the `hyp_observed` arrays match the real observation `real_observed`. This must produce a strictly positive weight value for each hypothesized observation, where larger means more similar. This is often an RBF kernel or similar.
 
-#### Missing observations
-If you want to be able to deal with partial missing values in the observations, the weight function should support masked arrays. The `squared_error(a,b)` function in `pfilter.py` does this, for example.
+
 
 ---
 
@@ -63,6 +62,9 @@ You might also specify:
 
 * **Internal weighting** a function `internal_weight_fn(state (n,d)) => weight vector (n,)` which provides a weighting to apply on top of the weight function based on *internal* state. This is useful to impose penalties or to include learned inverse models in the inference.
 * **Post-processing transform function** a function `transform_fn(state (n,d), weights (n,)) => states(n, k)` which can apply a post-processing transform and store the result in `transformed_particles`
+
+#### Missing observations
+If you want to be able to deal with partial missing values in the observations, the weight function should support masked arrays. The `squared_error(a,b)` function in `pfilter.py` does this, for example.
 
 ### Passing values to functions
 

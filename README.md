@@ -15,7 +15,7 @@ There are more mature and sophisticated packages for probabilistic filtering in 
 #### Kalman filtering
 * [pykalman](https://github.com/pykalman/pykalman) Easy to use Kalman Filter, Extended Kalman Filter and Unscented Kalman Filter implementations
 * [simdkalman](https://github.com/oseiskar/simdkalman) Fast implmentations of plain Kalman filter banks.
-* [torch-kalman](https://github.com/strongio/torch-kalman) PyTorch implementation of Kalman filters.
+* [torch-kalman](https://github.com/strongio/torch-kalman) PyTorch implementation of Kalman filters, including Pandas dataframe support.
 
 
 ## Installation

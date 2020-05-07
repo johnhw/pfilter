@@ -95,7 +95,7 @@ def squared_error(x, y, sigma=1):
         distance : scalar
             Total similarity, using equation:
 
-                d(x,y) = e^(((x - y) ** 2) / (2 * sigma ** 2)
+                d(x,y) = e^((-1 * (x - y) ** 2) / (2 * sigma ** 2))
 
             summed over all samples. Supports masked arrays.
     """

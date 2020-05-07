@@ -8,40 +8,44 @@ def make_heat_adjusted(sigma):
 
     return heat_distance
 
+
 ## Resampling based on the examples at: https://github.com/rlabbe/Kalman-and-Bayesian-Filters-in-Python/blob/master/12-Particle-Filters.ipynb
 ## originally by Roger Labbe, under an MIT License
 def systematic_resample(weights):
     n = len(weights)
-    positions = (np.arange(n) + np.random.uniform(0,1)) / n     
+    positions = (np.arange(n) + np.random.uniform(0, 1)) / n
     return create_indices(positions, weights)
-    
+
+
 def stratified_resample(weights):
-    n = len(weights)    
-    positions = (np.random.uniform(0,1,n) + np.arange(n)) / n          
+    n = len(weights)
+    positions = (np.random.uniform(0, 1, n) + np.arange(n)) / n
     return create_indices(positions, weights)
+
 
 def residual_resample(weights):
     n = len(weights)
     indices = np.zeros(n, np.uint32)
     # take int(N*w) copies of each weight
-    num_copies = (n*weights).astype(np.uint32)
+    num_copies = (n * weights).astype(np.uint32)
     k = 0
-    for i in range(n):        
-        for _ in range(num_copies[i]): # make n copies
+    for i in range(n):
+        for _ in range(num_copies[i]):  # make n copies
             indices[k] = i
             k += 1
     # use multinormial resample on the residual to fill up the rest.
-    residual = weights - num_copies     # get fractional part
-    residual /= np.sum(residual)     
+    residual = weights - num_copies  # get fractional part
+    residual /= np.sum(residual)
     cumsum = np.cumsum(residual)
-    cumsum[-1] = 1 
-    indices[k:n] = np.searchsorted(cumsum, np.random.uniform(0, 1, n-k))
+    cumsum[-1] = 1
+    indices[k:n] = np.searchsorted(cumsum, np.random.uniform(0, 1, n - k))
     return indices
-    
+
+
 def create_indices(positions, weights):
     n = len(weights)
     indices = np.zeros(n, np.uint32)
-    cumsum = np.cumsum(weights)     
+    cumsum = np.cumsum(weights)
     i, j = 0, 0
     while i < n:
         if positions[i] < cumsum[j]:
@@ -49,15 +53,15 @@ def create_indices(positions, weights):
             i += 1
         else:
             j += 1
-    
+
     return indices
+
 
 ### end rlabbe's resampling functions
 
+
 def multinomial_resample(weights):
     return np.random.choice(np.arange(len(weights)), p=weights, size=len(weights))
-
-
 
 
 # resample function from http://scipy-cookbook.readthedocs.io/items/ParticleFilter.html
@@ -247,7 +251,7 @@ class ParticleFilter(object):
         self.init_filter()
         self.n_eff_threshold = n_eff_threshold
         self.d = self.particles.shape[1]
-        self.observe_fn = observe_fn  or identity
+        self.observe_fn = observe_fn or identity
         self.dynamics_fn = dynamics_fn or identity
         self.noise_fn = noise_fn or identity
         self.weight_fn = weight_fn or squared_error
@@ -301,7 +305,6 @@ class ParticleFilter(object):
 
         # hypothesise observations
         self.hypotheses = self.observe_fn(self.particles, **kwargs)
-        
 
         if observed is not None:
             # compute similarity to observations
@@ -336,7 +339,6 @@ class ParticleFilter(object):
         # normalise weights to resampling probabilities
         self.weight_normalisation = np.sum(weights)
         self.weights = weights / self.weight_normalisation
-        
 
         # Compute effective sample size and entropy of weighting vector.
         # These are useful statistics for adaptive particle filtering.
@@ -345,7 +347,6 @@ class ParticleFilter(object):
 
         # preserve current sample set before any replenishment
         self.original_particles = np.array(self.particles)
-        
 
         # store mean (expected) hypothesis
         self.mean_hypothesis = np.sum(self.hypotheses.T * self.weights, axis=-1).T
@@ -356,8 +357,6 @@ class ParticleFilter(object):
         argmax_weight = np.argmax(self.weights)
         self.map_state = self.particles[argmax_weight]
         self.map_hypothesis = self.hypotheses[argmax_weight]
-
-        
 
         # apply any post-processing
         if self.transform_fn:
@@ -371,12 +370,11 @@ class ParticleFilter(object):
             np.random.random(size=(self.n_particles,)) < self.resample_proportion
         )
 
-        
-         # resampling (systematic resampling) step                                                                         
-        if self.n_eff < self.n_eff_threshold:                                                                             
-            indices = self.resample_fn(self.weights)                                                                              
-            self.particles = self.particles[indices, :]                                                                   
-            #self.weights = self.weights[indices] 
+        # resampling (systematic resampling) step
+        if self.n_eff < self.n_eff_threshold:
+            indices = self.resample_fn(self.weights)
+            self.particles = self.particles[indices, :]
+            # self.weights = self.weights[indices]
 
         self.resampled_particles = random_mask
         self.init_filter(mask=random_mask)

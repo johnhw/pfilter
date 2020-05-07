@@ -4,7 +4,10 @@ from pfilter import (
     gaussian_noise,
     cauchy_noise,
     make_heat_adjusted,
-    systematic_resample, stratified_resample, multinomial_resample, residual_resample
+    systematic_resample,
+    stratified_resample,
+    multinomial_resample,
+    residual_resample,
 )
 import numpy as np
 
@@ -25,74 +28,84 @@ def test_init():
     )
     pf.update(np.array([1]))
 
+
+# pure, basic multinomial sampling
 def basic_resample(weights):
     return np.random.choice(np.arange(len(weights)), p=weights, size=len(weights))
 
-def test_resampler():    
+
+def test_resampler():
     pf = ParticleFilter(
-        prior_fn=lambda n: np.random.normal(0, 1, (n, 1)),        
-        n_particles=100,        
-        resample_fn = None # should use default
+        prior_fn=lambda n: np.random.normal(0, 1, (n, 1)),
+        n_particles=100,
+        resample_fn=None,  # should use default
     )
     for i in range(10):
         pf.update(np.array([1]))
 
     pf = ParticleFilter(
-        prior_fn=lambda n: np.random.normal(0, 1, (n, 1)),        
-        n_particles=100,        
-        resample_fn = basic_resample 
+        prior_fn=lambda n: np.random.normal(0, 1, (n, 1)),
+        n_particles=100,
+        resample_fn=basic_resample,
     )
     for i in range(10):
         pf.update(np.array([1]))
 
-    for sampler in [stratified_resample, systematic_resample, residual_resample, multinomial_resample]:
+    for sampler in [
+        stratified_resample,
+        systematic_resample,
+        residual_resample,
+        multinomial_resample,
+    ]:
         pf = ParticleFilter(
-            prior_fn=lambda n: np.random.normal(0, 1, (n, 1)),        
-            n_particles=100,        
-            resample_fn = sampler
+            prior_fn=lambda n: np.random.normal(0, 1, (n, 1)),
+            n_particles=100,
+            resample_fn=sampler,
         )
         for i in range(10):
             pf.update(np.array([1]))
-    
-  
+
+
 def test_weights():
     # verify weights sum to 1.0
     pf = ParticleFilter(
-        prior_fn=lambda n: np.random.normal(0, 1, (n, 1)),        
-        n_particles=100,        
+        prior_fn=lambda n: np.random.normal(0, 1, (n, 1)), n_particles=100
     )
     for i in range(10):
         pf.update(np.array([1]))
         assert len(pf.weights) == len(pf.particles) == 100
-        assert pf.particles.shape==(100,1)
+        assert pf.particles.shape == (100, 1)
         assert np.allclose(np.sum(pf.weights), 1.0)
 
+
 def test_no_observe():
-    # check that 
+    # check that
     pf = ParticleFilter(
-        prior_fn=lambda n: np.random.normal(0, 1, (n, 1)),        
-        n_particles=10,        
+        prior_fn=lambda n: np.random.normal(0, 1, (n, 1)), n_particles=10
     )
-    for i in range(10):        
+    for i in range(10):
         pf.update(None)
         assert len(pf.weights) == len(pf.particles) == 10
-        assert pf.particles.shape==(10,1)
-        assert np.allclose(np.sum(pf.weights), 1.0)        
+        assert pf.particles.shape == (10, 1)
+        assert np.allclose(np.sum(pf.weights), 1.0)
+
 
 import numpy.ma as ma
+
+
 def test_partial_missing():
-    # check that 
+    # check that
     pf = ParticleFilter(
-        prior_fn=lambda n: np.random.normal(0, 1, (n, 4)),        
-        n_particles=100,        
+        prior_fn=lambda n: np.random.normal(0, 1, (n, 4)), n_particles=100
     )
-    for i in range(10):        
-        masked_input = ma.masked_equal(np.array([1,999,0,999]), 999)
+    for i in range(10):
+        masked_input = ma.masked_equal(np.array([1, 999, 0, 999]), 999)
         pf.update(masked_input)
-        pf.update(np.array([1,1,1,1]))
-        assert np.allclose(np.sum(pf.weights), 1.0)      
+        pf.update(np.array([1, 1, 1, 1]))
+        assert np.allclose(np.sum(pf.weights), 1.0)
         assert len(pf.weights) == len(pf.particles) == 100
-        
+
+
 def test_transform_fn():
     # silly initialisation, but uses all parameters
     pf = ParticleFilter(
@@ -109,7 +122,7 @@ def test_transform_fn():
         n_eff_threshold=1.0,
     )
     for i in range(10):
-        pf.update(np.array([1]))    
+        pf.update(np.array([1]))
         assert np.allclose(pf.original_particles * 2.0, pf.transformed_particles)
 
 

@@ -255,7 +255,7 @@ class ParticleFilter(object):
         self.dynamics_fn = dynamics_fn or identity
         self.noise_fn = noise_fn or identity
         self.weight_fn = weight_fn or squared_error
-        self.weights = 1.0
+        self.weights = np.ones(n_particles)
         self.transform_fn = transform_fn
         self.transformed_particles = None
         self.resample_proportion = resample_proportion or 0.0
@@ -371,7 +371,7 @@ class ParticleFilter(object):
         if self.n_eff < self.n_eff_threshold:
             indices = self.resample_fn(self.weights)
             self.particles = self.particles[indices, :]
-            self.weights = 1.0
+            self.weights = np.ones(n_particles)
 
         # randomly resample some particles from the prior
         if self.resample_proportion > 0:

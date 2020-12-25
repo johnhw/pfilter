@@ -371,7 +371,7 @@ class ParticleFilter(object):
         if self.n_eff < self.n_eff_threshold:
             indices = self.resample_fn(self.weights)
             self.particles = self.particles[indices, :]
-            self.weights = np.ones(n_particles)
+            self.weights = np.ones(self.n_particles)
 
         # randomly resample some particles from the prior
         if self.resample_proportion > 0:

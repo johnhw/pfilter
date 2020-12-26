@@ -255,6 +255,7 @@ class ParticleFilter(object):
         self.dynamics_fn = dynamics_fn or identity
         self.noise_fn = noise_fn or identity
         self.weight_fn = weight_fn or squared_error
+        self.weights = np.ones(n_particles)
         self.transform_fn = transform_fn
         self.transformed_particles = None
         self.resample_proportion = resample_proportion or 0.0
@@ -311,7 +312,7 @@ class ParticleFilter(object):
             # force to be positive
 
             weights = np.clip(
-                np.array(
+                self.weights * np.array(
                     self.weight_fn(
                         self.hypotheses.reshape(self.n_particles, -1),
                         observed.reshape(1, -1),
@@ -323,7 +324,7 @@ class ParticleFilter(object):
             )
         else:
             # we have no observation, so all particles weighted the same
-            weights = np.ones((self.n_particles,))
+            weights = self.weights * np.ones((self.n_particles,))
 
         # apply weighting based on the internal state
         # most filters don't use this, but can be a useful way of combining
@@ -365,17 +366,17 @@ class ParticleFilter(object):
             )
         else:
             self.transformed_particles = self.original_particles
-        # randomly resample some particles from the prior
-        random_mask = (
-            np.random.random(size=(self.n_particles,)) < self.resample_proportion
-        )
 
         # resampling (systematic resampling) step
         if self.n_eff < self.n_eff_threshold:
             indices = self.resample_fn(self.weights)
             self.particles = self.particles[indices, :]
-            # self.weights = self.weights[indices]
+            self.weights = np.ones(self.n_particles) / self.n_particles
 
-        self.resampled_particles = random_mask
-        self.init_filter(mask=random_mask)
-
+        # randomly resample some particles from the prior
+        if self.resample_proportion > 0:
+            random_mask = (
+                np.random.random(size=(self.n_particles,)) < self.resample_proportion
+            )
+            self.resampled_particles = random_mask
+            self.init_filter(mask=random_mask)

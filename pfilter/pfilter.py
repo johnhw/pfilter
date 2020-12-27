@@ -255,7 +255,7 @@ class ParticleFilter(object):
         self.dynamics_fn = dynamics_fn or identity
         self.noise_fn = noise_fn or identity
         self.weight_fn = weight_fn or squared_error
-        self.weights = np.ones(n_particles)
+        self.weights = np.ones(self.n_particles) / self.n_particles
         self.transform_fn = transform_fn
         self.transformed_particles = None
         self.resample_proportion = resample_proportion or 0.0

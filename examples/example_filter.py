@@ -1,3 +1,4 @@
+# %%
 # press ESC to exit the demo!
 from pfilter import (
     ParticleFilter,
@@ -32,7 +33,7 @@ def blob(x):
     return y
 
 
-#%%
+# %%
 
 # names (this is just for reference for the moment!)
 columns = ["x", "y", "radius", "dx", "dy"]
@@ -76,7 +77,7 @@ def example_filter():
         observe_fn=blob,
         n_particles=100,
         dynamics_fn=velocity,
-        noise_fn=lambda x: cauchy_noise(x, sigmas=[0.05, 0.05, 0.01, 0.005, 0.005]),
+        noise_fn=lambda x: gaussian_noise(x, sigmas=[0.15, 0.15, 0.1, 0.05, 0.05]),
         weight_fn=lambda x, y: squared_error(x, y, sigma=2),
         resample_proportion=0.2,
         column_names=columns,
@@ -171,3 +172,5 @@ def example_filter():
 
 if __name__ == "__main__":
     example_filter()
+
+# %%

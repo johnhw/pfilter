@@ -1,6 +1,7 @@
 from pfilter import (
     ParticleFilter,
     squared_error,
+    t_noise,
     gaussian_noise,
     cauchy_noise,
     make_heat_adjusted,
@@ -171,6 +172,15 @@ def test_cauchy_noise():
         val = np.random.normal(0, 10)
         x = np.full(shape, val)
         noisy = cauchy_noise(x, np.ones(shape[1]))
+
+def test_t_noise():
+    np.random.seed(2012)
+    for shape in [10, 10], [100, 1000], [500, 50]:
+        val = np.random.normal(0, 10)
+        x = np.full(shape, val)         
+        noisy = t_noise(x, sigmas=np.ones(shape[1]), df=1.0)
+        noisy = t_noise(x, sigmas=np.ones(shape[1]), df=10.0)
+        noisy = t_noise(x, sigmas=np.ones(shape[1]), df=0.1)
 
 
 def test_squared_error():

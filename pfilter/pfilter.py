@@ -117,6 +117,23 @@ def gaussian_noise(x, sigmas):
     return x + n
 
 
+def t_noise(x, sigmas, df=1.0):
+    """Apply diagonal covaraiance t-distributed noise to the N,D array x.
+    Parameters:
+    -----------
+        x : array
+            (N,D) array of values
+        sigmas : array
+            D-element vector of std. dev. for each column of x
+        df : degrees of freedom (shape of the t distribution)
+            Must be a scalar
+    """
+    n = np.random.standard_t(df, size=(x.shape[0], len(sigmas))) * x.shape[0]    
+    return x + n
+
+
+
+
 def cauchy_noise(x, sigmas):
     """Apply diagonal covaraiance Cauchy-distributed noise to the N,D array x.
     Parameters:

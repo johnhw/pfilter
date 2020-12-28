@@ -4,6 +4,7 @@ from pfilter import (
     ParticleFilter,
     gaussian_noise,
     cauchy_noise,
+    t_noise,
     squared_error,
     independent_sample,
 )
@@ -77,9 +78,9 @@ def example_filter():
         observe_fn=blob,
         n_particles=100,
         dynamics_fn=velocity,
-        noise_fn=lambda x: gaussian_noise(x, sigmas=[0.15, 0.15, 0.1, 0.05, 0.05]),
+        noise_fn=lambda x: t_noise(x, sigmas=[0.15, 0.15, 0.05, 0.05, 0.15], df=100.0),
         weight_fn=lambda x, y: squared_error(x, y, sigma=2),
-        resample_proportion=0.2,
+        resample_proportion=0.05,
         column_names=columns,
     )
 

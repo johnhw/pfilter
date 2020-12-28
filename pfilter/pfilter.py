@@ -128,7 +128,7 @@ def t_noise(x, sigmas, df=1.0):
         df : degrees of freedom (shape of the t distribution)
             Must be a scalar
     """
-    n = np.random.standard_t(df, size=(x.shape[0], len(sigmas))) * x.shape[0]    
+    n = np.random.standard_t(df, size=(x.shape[0], len(sigmas))) * sigmas
     return x + n
 
 

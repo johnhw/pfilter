@@ -375,6 +375,7 @@ class ParticleFilter(object):
         argmax_weight = np.argmax(self.weights)
         self.map_state = self.particles[argmax_weight]
         self.map_hypothesis = self.hypotheses[argmax_weight]
+        self.original_weights = np.array(self.weights) # before any resampling
 
         # apply any post-processing
         if self.transform_fn:

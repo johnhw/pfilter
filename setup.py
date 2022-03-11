@@ -6,7 +6,7 @@ with open("README.md") as f:
 
 setup(
     name="pfilter",  # This is the name of your PyPI-package.
-    version="0.2.4",  # Update the version number for new releases
+    version="0.2.5",  # Update the version number for new releases
     install_requires=['numpy'],
     packages=[
         "pfilter"

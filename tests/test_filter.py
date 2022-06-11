@@ -34,6 +34,72 @@ def test_init():
 def basic_resample(weights):
     return np.random.choice(np.arange(len(weights)), p=weights, size=len(weights))
 
+def test_copy():
+    pf = ParticleFilter(
+        prior_fn=lambda n: np.random.normal(0, 1, (n, 1)),
+        observe_fn=lambda x: x,
+        n_particles=100,
+        dynamics_fn=lambda x: x,
+        noise_fn=lambda x: x,
+        weight_fn=lambda x, y: np.ones(len(x)),
+        resample_proportion=0.2,
+        column_names=["test"],
+        internal_weight_fn=lambda x, y: np.ones(len(x)),
+        n_eff_threshold=1.0,
+    )
+
+    original = np.array(pf.particles)
+    original_weights = np.array(pf.weights)
+
+    a_copy = pf.copy()
+
+    pf.update() 
+
+    b_copy = pf.copy()
+
+    pf.update(np.array([1]))
+
+    c_copy = pf.copy()
+
+    assert np.allclose(a_copy.particles, original)
+    assert np.allclose(a_copy.weights, original_weights)
+    assert np.allclose(c_copy.mean_hypothesis, pf.mean_hypothesis)
+    assert not c_copy.mean_hypothesis is pf.mean_hypothesis
+    
+
+
+
+def test_predict():
+    # silly initialisation, but uses all parameters
+    pf = ParticleFilter(
+        prior_fn=lambda n: np.random.normal(0, 1, (n, 1)),
+        observe_fn=lambda x: x,
+        n_particles=100,
+        dynamics_fn=lambda x: x + 1,
+        noise_fn=lambda x: x + np.random.normal(0, 1, x.shape),
+        weight_fn=lambda x, y: np.sum(y**2, axis=1),
+        resample_proportion=0.2,
+        column_names=["test"],
+        internal_weight_fn=lambda x, y: np.ones(len(x)),
+        n_eff_threshold=1.0,
+    )
+    old_weights = np.array(pf.original_weights)
+    old_particles = np.array(pf.original_particles)
+    states = []
+    for i in pf.predictor(10):
+        states.append([pf.weights, pf.particles])
+    
+    assert len(states)==10
+    # make sure the state hasn't changed
+    assert np.allclose(old_weights, pf.original_weights)
+    assert np.allclose(old_particles, pf.original_particles)
+    pf.update(np.array([1]))
+    #assert not np.allclose(old_weights, pf.original_weights)
+    assert not np.allclose(old_particles, pf.original_particles)
+    
+    
+
+
 
 def test_resampler():
     pf = ParticleFilter(

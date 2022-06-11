@@ -4,7 +4,7 @@ import numpy.ma as ma
 # return a new function that has the heat kernel (given by delta) applied.
 def make_heat_adjusted(sigma):
     def heat_distance(d):
-        return np.exp(-d ** 2 / (2.0 * sigma ** 2))
+        return np.exp(-(d**2) / (2.0 * sigma**2))
 
     return heat_distance
 
@@ -83,25 +83,25 @@ identity = lambda x: x
 
 def squared_error(x, y, sigma=1):
     """
-        RBF kernel, supporting masked values in the observation
-        Parameters:
-        -----------
-        x : array (N,D) array of values
-        y : array (N,D) array of values
+    RBF kernel, supporting masked values in the observation
+    Parameters:
+    -----------
+    x : array (N,D) array of values
+    y : array (N,D) array of values
 
-        Returns:
-        -------
+    Returns:
+    -------
 
-        distance : scalar
-            Total similarity, using equation:
+    distance : scalar
+        Total similarity, using equation:
 
-                d(x,y) = e^((-1 * (x - y) ** 2) / (2 * sigma ** 2))
+            d(x,y) = e^((-1 * (x - y) ** 2) / (2 * sigma ** 2))
 
-            summed over all samples. Supports masked arrays.
+        summed over all samples. Supports masked arrays.
     """
     dx = (x - y) ** 2
     d = np.ma.sum(dx, axis=1)
-    return np.exp(-d / (2.0 * sigma ** 2))
+    return np.exp(-d / (2.0 * sigma**2))
 
 
 def gaussian_noise(x, sigmas):
@@ -132,8 +132,6 @@ def t_noise(x, sigmas, df=1.0):
     return x + n
 
 
-
-
 def cauchy_noise(x, sigmas):
     """Apply diagonal covaraiance Cauchy-distributed noise to the N,D array x.
     Parameters:
@@ -157,7 +155,7 @@ def independent_sample(fn_list):
                 from a distribution.
     Returns:
     -------
-        sample_fn: a function that will sample from all of the functions and concatenate 
+        sample_fn: a function that will sample from all of the functions and concatenate
         them
     """
 
@@ -170,10 +168,10 @@ def independent_sample(fn_list):
 class ParticleFilter(object):
     """A particle filter object which maintains the internal state of a population of particles, and can
     be updated given observations.
-    
+
     Attributes:
     -----------
-    
+
     n_particles : int
         number of particles used (N)
     d : int
@@ -186,16 +184,18 @@ class ParticleFilter(object):
         (N,D) array of particle states *before* any random resampling replenishment
         This should be used for any computation on the previous time step (e.g. computing
         expected values, etc.)
-    mean_hypothesis : array 
+    mean_hypothesis : array
         The current mean hypothesized observation
     mean_state : array
         The current mean hypothesized internal state D
-    map_hypothesis: 
+    map_hypothesis:
         The current most likely hypothesized observation
     map_state:
         The current most likely hypothesized state
     n_eff:
         Normalized effective sample size, in range 0.0 -> 1.0
+    weight_informational_energy:
+        Informational energy of the distribution (Onicescu's)
     weight_entropy:
         Entropy of the weight distribution (in nats)
     hypotheses : array
@@ -220,18 +220,18 @@ class ParticleFilter(object):
         n_eff_threshold=1.0,
     ):
         """
-        
+
         Parameters:
         -----------
-        
+
         prior_fn : function(n) = > states
                 a function that generates N samples from the prior over internal states, as
                 an (N,D) particle array
         observe_fn : function(states) => observations
-                    transformation function from the internal state to the sensor state. Takes an (N,D) array of states 
+                    transformation function from the internal state to the sensor state. Takes an (N,D) array of states
                     and returns the expected sensor output as an array (e.g. a (N,W,H) tensor if generating W,H dimension images).
         resample_fn: A resampling function weights (N,) => indices (N,)
-        n_particles : int 
+        n_particles : int
                      number of particles in the filter
         dynamics_fn : function(states) => states
                       dynamics function, which takes an (N,D) state array and returns a new one with the dynamics applied.
@@ -239,14 +239,14 @@ class ParticleFilter(object):
                     noise function, takes a state vector and returns a new one with noise added.
         weight_fn :  function(hypothesized, real) => weights
                     computes the distance from the real sensed variable and that returned by observe_fn. Takes
-                    a an array of N hypothesised sensor outputs (e.g. array of dimension (N,W,H)) and the observed output (e.g. array of dimension (W,H)) and 
-                    returns a strictly positive weight for the each hypothesis as an N-element vector. 
+                    a an array of N hypothesised sensor outputs (e.g. array of dimension (N,W,H)) and the observed output (e.g. array of dimension (W,H)) and
+                    returns a strictly positive weight for the each hypothesis as an N-element vector.
                     This should be a *similarity* measure, with higher values meaning more similar, for example from an RBF kernel.
         internal_weight_fn :  function(states, observed) => weights
                     Reweights the particles based on their *internal* state. This is function which takes
-                    an (N,D) array of internal states and the observation and 
-                    returns a strictly positive weight for the each state as an N-element vector. 
-                    Typically used to force particles inside of bounds, etc.       
+                    an (N,D) array of internal states and the observation and
+                    returns a strictly positive weight for the each state as an N-element vector.
+                    Typically used to force particles inside of bounds, etc.
         transform_fn: function(states, weights) => transformed_states
                     Applied at the very end of the update step, if specified. Updates the attribute
                     `transformed_particles`. Useful when the particle state needs to be projected
@@ -259,7 +259,7 @@ class ParticleFilter(object):
                     the effective sample size (n_eff) drops below the specified threshold.
         column_names : list of strings
                     names of each the columns of the state vector
-        
+
         """
         self.resample_fn = resample_fn or resample
         self.column_names = column_names
@@ -278,10 +278,91 @@ class ParticleFilter(object):
         self.resample_proportion = resample_proportion or 0.0
         self.internal_weight_fn = internal_weight_fn
         self.original_particles = np.array(self.particles)
+        self.original_weights = np.array(self.weights)
+
+    def copy(self):
+        """Copy this filter at its current state. Returns
+        an exact copy, that can be run forward indepedently of the first.
+        Beware that if your passed in functions (e.g. dynamics) are stateful, behaviour
+        might not be independent! (tip: write stateless functions!)
+
+        Returns:
+        ---------
+            A new, independent copy of this filter.
+        """
+        # construct the filter
+        new_copy = ParticleFilter(
+            observe_fn=self.observe_fn,
+            resample_fn=self.resample_fn,
+            n_particles=self.n_particles,
+            prior_fn=self.prior_fn,
+            dynamics_fn=self.dynamics_fn,
+            weight_fn=self.weight_fn,
+            resample_proportion=self.resample_proportion,
+            column_names=self.column_names,
+            internal_weight_fn=self.internal_weight_fn,
+            transform_fn=self.transform_fn,
+            n_eff_threshold=self.n_eff_threshold,
+        )
+
+        # copy particle state
+        for array in ["particles", "original_particles", "original_weights", "weights"]:
+            setattr(new_copy, array, np.array(getattr(self, array)))
+
+        # copy any attributes
+        for array in [
+            "mean_hypothesis",
+            "mean_state",
+            "map_state",
+            "map_hypothesis",
+            "hypotheses",
+            "n_eff",
+            "weight_informational_energy",
+            "weight_entropy",
+        ]:
+            if hasattr(self, array):
+                setattr(new_copy, array, getattr(self, array).copy())
+
+        return new_copy
+
+    def predictor(self, n=None, observed=None):
+        """Return an generator that runs a copy of the filter forward for prediction.
+        Yields the copied filter object at each step. Useful for making predictions
+        without inference.
+
+        By default, the filter will run without observations. Pass observed to set the initial observation.
+        Use send() to send new observations to the filter. If no send() is used on any given iteration, the filter
+        will revert to prediction without observation.
+
+        If n is specified, runs for n steps; otherwise, runs forever.
+
+        Parameters:
+        ----------
+
+        n: integer
+            Number of steps to run for. If None, run forever.
+
+        observed: array
+            The initial observed output, in the same format as observe_fn() will produce. This is typically the
+            input from the sensor observing the process (e.g. a camera image in optical tracking).
+            If None, then the observation step is skipped
+
+        """
+        copy = self.copy()
+        observed = None
+        if n is not None:
+            for i in range(n):
+                copy.update(observed)
+                observed = yield copy
+        else:
+            while True:
+                copy.update(observed)
+                observed = yield copy
+
 
     def init_filter(self, mask=None):
         """Initialise the filter by drawing samples from the prior.
-        
+
         Parameters:
         -----------
         mask : array, optional
@@ -298,10 +379,10 @@ class ParticleFilter(object):
 
     def update(self, observed=None, **kwargs):
         """Update the state of the particle filter given an observation.
-        
+
         Parameters:
         ----------
-        
+
         observed: array
             The observed output, in the same format as observe_fn() will produce. This is typically the
             input from the sensor observing the process (e.g. a camera image in optical tracking).
@@ -327,9 +408,12 @@ class ParticleFilter(object):
         if observed is not None:
             # compute similarity to observations
             # force to be positive
+            if type(observed)==list or  type(observed)==tuple or type(observed)==float or type(observed)==int:
+                observed = np.array(observed, dtype=np.float64)
 
             weights = np.clip(
-                self.weights * np.array(
+                self.weights
+                * np.array(
                     self.weight_fn(
                         self.hypotheses.reshape(self.n_particles, -1),
                         observed.reshape(1, -1),
@@ -360,7 +444,8 @@ class ParticleFilter(object):
 
         # Compute effective sample size and entropy of weighting vector.
         # These are useful statistics for adaptive particle filtering.
-        self.n_eff = (1.0 / np.sum(self.weights ** 2)) / self.n_particles
+        self.n_eff = (1.0 / np.sum(self.weights**2)) / self.n_particles
+        self.weight_informational_energy = np.sum(self.weights**2)
         self.weight_entropy = np.sum(self.weights * np.log(self.weights))
 
         # preserve current sample set before any replenishment
@@ -375,7 +460,7 @@ class ParticleFilter(object):
         argmax_weight = np.argmax(self.weights)
         self.map_state = self.particles[argmax_weight]
         self.map_hypothesis = self.hypotheses[argmax_weight]
-        self.original_weights = np.array(self.weights) # before any resampling
+        self.original_weights = np.array(self.weights)  # before any resampling
 
         # apply any post-processing
         if self.transform_fn:

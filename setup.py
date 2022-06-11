@@ -17,7 +17,7 @@ setup(
     long_description=readme,
     author_email="johnhw@gmail.com",
     url="https://github.com/johnhw/pfilter",  # use the URL to the github repo
-    download_url="https://github.com/johnhw/pfilter/tarball/0.2",
+    download_url="https://github.com/johnhw/pfilter/tarball/0.2.5",
     keywords=["particle", "probabilistic", "stochastic", "filter", "filtering"],
 )
 

@@ -297,6 +297,7 @@ class ParticleFilter(object):
             n_particles=self.n_particles,
             prior_fn=self.prior_fn,
             dynamics_fn=self.dynamics_fn,
+            noise_fn=self.noise_fn,
             weight_fn=self.weight_fn,
             resample_proportion=self.resample_proportion,
             column_names=self.column_names,
